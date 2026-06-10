@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <brand>
+        <headerColor>#1B2A4A</headerColor>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <label>Kiosh</label>
+    <navType>Standard</navType>
+    <tabs>Hyrto_Hub__c</tabs>
+    <tabs>Hyrto_Booking__c</tabs>
+    <tabs>Hyrto_Inspection__c</tabs>
+    <tabs>Hyrto_ServiceSchedule__c</tabs>
+    <tabs>Hyrto_Addon__c</tabs>
+    <tabs>Hyrto_ServiceLog__c</tabs>
+    <tabs>standard-Asset</tabs>
+    <uiType>Lightning</uiType>
+    <utilityBar>Kiosh_UtilityBar</utilityBar>
+</CustomApplication>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <types>
+    <!-- Hub__c fields -->
+    <members>Hub__c.Description__c</members>
+    <members>Hub__c.Address__c</members>
+    <members>Hub__c.PostalCode__c</members>
+    <members>Hub__c.MaxRadiusKm__c</members>
+    <members>Hub__c.BaseFee__c</members>
+    <members>Hub__c.MediumFee__c</members>
+    <members>Hub__c.FarFee__c</members>
+    <name>CustomField</name>
+  </types>
+  <types>
+    <!-- Booking_Slot__c fields -->
+    <members>Booking_Slot__c.Description__c</members>
+    <members>Booking_Slot__c.Hub__c</members>
+    <members>Booking_Slot__c.Status__c</members>
+    <members>Booking_Slot__c.CustomerName__c</members>
+    <members>Booking_Slot__c.CustomerEmail__c</members>
+    <members>Booking_Slot__c.CustomerPhone__c</members>
+    <members>Booking_Slot__c.DeliveryAddress__c</members>
+    <members>Booking_Slot__c.DeliveryPostalCode__c</members>
+    <members>Booking_Slot__c.DistanceKm__c</members>
+    <members>Booking_Slot__c.DeliveryFee__c</members>
+    <members>Booking_Slot__c.BasePrice__c</members>
+    <members>Booking_Slot__c.TotalPrice__c</members>
+    <name>CustomField</name>
+  </types>
+  <types>
+    <!-- Addon_Product__c fields -->
+    <members>Addon_Product__c.Description__c</members>
+    <members>Addon_Product__c.Quantity__c</members>
+    <members>Addon_Product__c.UnitPrice__c</members>
+    <members>Addon_Product__c.TotalPrice__c</members>
+    <name>CustomField</name>
+  </types>
+  <types>
+    <!-- Service_Log__c fields -->
+    <members>Service_Log__c.Description__c</members>
+    <members>Service_Log__c.ServiceType__c</members>
+    <members>Service_Log__c.ServiceDate__c</members>
+    <members>Service_Log__c.Asset__c</members>
+    <members>Service_Log__c.Cost__c</members>
+    <name>CustomField</name>
+  </types>
+  <types>
+    <!-- Asset fields -->
+    <members>Asset.Model__c</members>
+    <members>Asset.SerialNumber__c</members>
+    <members>Asset.Hub__c</members>
+    <name>CustomField</name>
+  </types>
+  <version>62.0</version>
+</Package>

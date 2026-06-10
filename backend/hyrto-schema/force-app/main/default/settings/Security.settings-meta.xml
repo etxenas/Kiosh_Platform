@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SecuritySettings xmlns="http://soap.sforce.com/2006/04/metadata">
+    <networkAccess>
+        <ipRanges>
+            <description>Allow GCP US multi-region</description>
+            <end>35.31.255.255</end>
+            <start>35.0.0.0</start>
+        </ipRanges>
+        <ipRanges>
+            <description>Allow AWS US-east</description>
+            <end>3.31.255.255</end>
+            <start>3.0.0.0</start>
+        </ipRanges>
+        <ipRanges>
+            <description>Allow Azure common</description>
+            <end>20.31.255.255</end>
+            <start>20.0.0.0</start>
+        </ipRanges>
+        <ipRanges>
+            <description>Allow GCP EU</description>
+            <end>34.31.255.255</end>
+            <start>34.0.0.0</start>
+        </ipRanges>
+        <ipRanges>
+            <description>Allow Sweden residential</description>
+            <end>62.31.255.255</end>
+            <start>62.0.0.0</start>
+        </ipRanges>
+        <ipRanges>
+            <description>Allow Nordic</description>
+            <end>46.31.255.255</end>
+            <start>46.0.0.0</start>
+        </ipRanges>
+        <ipRanges>
+            <description>Allow Cloudflare</description>
+            <end>104.31.255.255</end>
+            <start>104.0.0.0</start>
+        </ipRanges>
+    </networkAccess>
+</SecuritySettings>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>OverallCondition__c</fullName>
+    <label>Övergripande skick</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Rent</fullName><default>false</default><label>Rent</label></value>
+            <value><fullName>OK</fullName><default>false</default><label>OK</label></value>
+            <value><fullName>Smutsigt</fullName><default>false</default><label>Smutsigt</label></value>
+            <value><fullName>Skadat</fullName><default>false</default><label>Skadat</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

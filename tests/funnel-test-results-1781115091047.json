@@ -1,0 +1,607 @@
+[
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 1260,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "dates",
+    "status": 200,
+    "ms": 752,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "products",
+    "status": 200,
+    "ms": 772,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": false,
+    "mappedStep": "Toalett",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": false,
+      "step": "Toalett",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "addons",
+    "status": 200,
+    "ms": 612,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": false,
+    "mappedStep": "Tillval",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": false,
+      "step": "Tillval",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "serviceLevel",
+    "status": 200,
+    "ms": 409,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": false,
+    "mappedStep": "Servicenivå",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": false,
+      "step": "Servicenivå",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "review",
+    "status": 200,
+    "ms": 513,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": false,
+    "mappedStep": "Översikt",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": false,
+      "step": "Översikt",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t1-b2c-noBooking",
+    "step": "customer",
+    "status": 200,
+    "ms": 613,
+    "leadId": "00Qfj00000VkgLnEAJ",
+    "created": false,
+    "mappedStep": "Kunduppgifter",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkgLnEAJ",
+      "created": false,
+      "step": "Kunduppgifter",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 613,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "dates",
+    "status": 200,
+    "ms": 717,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "products",
+    "status": 200,
+    "ms": 614,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Toalett",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Toalett",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "addons",
+    "status": 200,
+    "ms": 509,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Tillval",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Tillval",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "serviceLevel",
+    "status": 200,
+    "ms": 512,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Servicenivå",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Servicenivå",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "review",
+    "status": 200,
+    "ms": 512,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Översikt",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Översikt",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "customer",
+    "status": 200,
+    "ms": 410,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Kunduppgifter",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": true,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Kunduppgifter",
+      "status": "Working - Webbokning pågår",
+      "isB2B": true,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t2-b2b-bookingCreated",
+    "step": "bookingCreated",
+    "status": 200,
+    "ms": 2455,
+    "leadId": "00Qfj00000VkzRdEAJ",
+    "created": false,
+    "mappedStep": "Bokning skickad",
+    "mappedStatus": "Qualified - Bokning skickad",
+    "isB2B": true,
+    "conversion": "see-below",
+    "raw": {
+      "id": "00Qfj00000VkzRdEAJ",
+      "created": false,
+      "step": "Bokning skickad",
+      "status": "Qualified - Bokning skickad",
+      "isB2B": true,
+      "conversion": {
+        "accountId": "001fj00001IfZwbAAF",
+        "contactId": "003fj000015i6pVAAQ",
+        "oppId": "006fj00000G3JCzAAN",
+        "orderId": "801fj00001IfZyDAAV"
+      }
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-postalCode",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 513,
+    "leadId": "00Qfj00000VkeY9EAJ",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkeY9EAJ",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-dates",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 497,
+    "leadId": "00Qfj00000VkzZhEAJ",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzZhEAJ",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-dates",
+    "step": "dates",
+    "status": 200,
+    "ms": 337,
+    "leadId": "00Qfj00000VkzZhEAJ",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzZhEAJ",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-products",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 501,
+    "leadId": "00Qfj00000VkzbJEAR",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzbJEAR",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-products",
+    "step": "dates",
+    "status": 200,
+    "ms": 530,
+    "leadId": "00Qfj00000VkzbJEAR",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzbJEAR",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-products",
+    "step": "products",
+    "status": 200,
+    "ms": 348,
+    "leadId": "00Qfj00000VkzbJEAR",
+    "created": false,
+    "mappedStep": "Toalett",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzbJEAR",
+      "created": false,
+      "step": "Toalett",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-serviceLevel",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 443,
+    "leadId": "00Qfj00000Vkfr8EAB",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000Vkfr8EAB",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-serviceLevel",
+    "step": "dates",
+    "status": 200,
+    "ms": 511,
+    "leadId": "00Qfj00000Vkfr8EAB",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000Vkfr8EAB",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-serviceLevel",
+    "step": "products",
+    "status": 200,
+    "ms": 411,
+    "leadId": "00Qfj00000Vkfr8EAB",
+    "created": false,
+    "mappedStep": "Toalett",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000Vkfr8EAB",
+      "created": false,
+      "step": "Toalett",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t3-drop-serviceLevel",
+    "step": "serviceLevel",
+    "status": 200,
+    "ms": 512,
+    "leadId": "00Qfj00000Vkfr8EAB",
+    "created": false,
+    "mappedStep": "Servicenivå",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000Vkfr8EAB",
+      "created": false,
+      "step": "Servicenivå",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t4-reentry",
+    "step": "postalCode",
+    "status": 200,
+    "ms": 512,
+    "leadId": "00Qfj00000VkzcvEAB",
+    "created": true,
+    "mappedStep": "Startad",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzcvEAB",
+      "created": true,
+      "step": "Startad",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t4-reentry",
+    "step": "dates",
+    "status": 200,
+    "ms": 409,
+    "leadId": "00Qfj00000VkzcvEAB",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzcvEAB",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t4-reentry",
+    "step": "products",
+    "status": 200,
+    "ms": 409,
+    "leadId": "00Qfj00000VkzcvEAB",
+    "created": false,
+    "mappedStep": "Toalett",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzcvEAB",
+      "created": false,
+      "step": "Toalett",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t4-reentry",
+    "step": "dates",
+    "status": 200,
+    "ms": 407,
+    "leadId": "00Qfj00000VkzcvEAB",
+    "created": false,
+    "mappedStep": "Datum",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzcvEAB",
+      "created": false,
+      "step": "Datum",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  },
+  {
+    "sessionId": "test-1781115091047-t4-reentry",
+    "step": "products",
+    "status": 200,
+    "ms": 409,
+    "leadId": "00Qfj00000VkzcvEAB",
+    "created": false,
+    "mappedStep": "Toalett",
+    "mappedStatus": "Working - Webbokning pågår",
+    "isB2B": false,
+    "conversion": null,
+    "raw": {
+      "id": "00Qfj00000VkzcvEAB",
+      "created": false,
+      "step": "Toalett",
+      "status": "Working - Webbokning pågår",
+      "isB2B": false,
+      "conversion": null
+    }
+  }
+]

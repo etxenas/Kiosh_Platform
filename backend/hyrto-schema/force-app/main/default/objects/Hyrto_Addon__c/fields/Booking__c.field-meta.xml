@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+ <fullName>Booking__c</fullName><label>Booking</label><type>Lookup</type>
+ <referenceTo>Hyrto_Booking__c</referenceTo>
+ <relationshipLabel>Addons</relationshipLabel>
+ <relationshipName>Addons</relationshipName>
+</CustomField>

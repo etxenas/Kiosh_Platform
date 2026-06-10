@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <types>
+    <members>Asset.Hub_del__c</members>
+    <members>Asset.Hyrto_Hub_del__c</members>
+    <members>Booking_Slot__c.Hub_del__c</members>
+    <members>Booking_Slot__c.Hyrto_Hub_del__c</members>
+  </types>
+  <name>CustomField</name>
+  <version>62.0</version>
+</Package>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+ <fullName>Asset__c</fullName><label>Asset</label><type>Lookup</type>
+ <referenceTo>Asset</referenceTo>
+ <relationshipLabel>Service Logs</relationshipLabel>
+ <relationshipName>Hyrto_ServiceLogs</relationshipName>
+</CustomField>

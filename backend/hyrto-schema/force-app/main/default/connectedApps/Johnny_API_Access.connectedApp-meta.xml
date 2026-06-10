@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectedApp xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>kiosh.e2443b4a9d8e@agentforce.com</contactEmail>
+    <description>API access for Johnny AI assistant</description>
+    <label>Johnny API Access</label>
+    <oauthConfig>
+        <callbackUrl>https://login.salesforce.com/services/oauth2/callback</callbackUrl>
+        <certificate>MIIDITCCAgmgAwIBAgIUWjcwOetKBe9fEc+8LpZ8162EGzAwDQYJKoZIhvcNAQELBQAwIDEeMBwGA1UEAwwVSm9obm55IFNGIEludGVncmF0aW9uMB4XDTI2MDYwMzEwMjU0MFoXDTM2MDUzMTEwMjU0MFowIDEeMBwGA1UEAwwVSm9obm55IFNGIEludGVncmF0aW9uMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn9kgyGAmxyTkN3aNjQAuZW5jvga2KHyy7lLIHzyS79zCmUZ8OcRy0fMvHJue4PaeNQUNh33LmgBlF5rIlZaHZWDDpnMghcwYnkkMNUpYl8noQRtVAlW4n9VlMW61MM59iqjM5EVmqbnjZG7CYIY7RClXO6Ug9ROzXFCfwXMLamuo4XK7Ea5gFgXwihfzE56FrAvOYRzKpaLi+50L0QWtrmAZmk+P0w7zmzTAFrrCyP+qz/TpXX6+IQP8Rick8j0il4ZZhmO3jl0QQjfNe2ZW5oKjo5XQUWasLW1iDybqKnKh5dsbMI3Ujc6RPeQaIxX+3KiaBFR72UR7nhjfpgdMnQIDAQABo1MwUTAdBgNVHQ4EFgQUZuZ92qQNse8+AXM7lV1g/di1PpQwHwYDVR0jBBgwFoAUZuZ92qQNse8+AXM7lV1g/di1PpQwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAN19X27xQxwaZ6cM8K91Vxcd1+DYJTDOGTNa7yJFO55iP8qMwdx8sRYPLFyXi7NZlUIZxFUMHeCGg+Ykg1mC9zaoUyP3uiSz+j8cHadghOz2wfPZ1l5FHzc1qXICzB5GBnN3iwkc5CeZfs4/Iw76CbVMcT8x3nxKzoOLMNtJlQ7GafT4llAJiNDtSkrgB3gJCeAvZL/GXQE83gAc+PGSu4+ZKiVdKOU7oL+u/hnhVT0tXWLeXZ6EevRL5HxRGpeKg+mScNo7KXQcgdS/Yx9af1gYss38sTcfhj7JSiq9VLthWCfWe+5TPvVbmZE3LE3I5oA6tDn976nkJNs3RC2nuZg==</certificate>
+        <consumerKey>3MVG9HtWXcDGV.nFrqAfC7X4rOd951Sp_945xte.9aWLhXEWXhM082aTkIEmQPf3xzxeEOlSiT8p05Z3oCkYE</consumerKey>
+        <isAdminApproved>false</isAdminApproved>
+        <isClientCredentialEnabled>true</isClientCredentialEnabled>
+        <isCodeCredentialEnabled>false</isCodeCredentialEnabled>
+        <isCodeCredentialPostOnly>false</isCodeCredentialPostOnly>
+        <isConsumerSecretOptional>false</isConsumerSecretOptional>
+        <isIntrospectAllTokens>false</isIntrospectAllTokens>
+        <isNamedUserJwtEnabled>false</isNamedUserJwtEnabled>
+        <isPkceRequired>false</isPkceRequired>
+        <isRefreshTokenRotationEnabled>false</isRefreshTokenRotationEnabled>
+        <isSecretRequiredForRefreshToken>false</isSecretRequiredForRefreshToken>
+        <isSecretRequiredForTokenExchange>false</isSecretRequiredForTokenExchange>
+        <isTokenExchangeEnabled>false</isTokenExchangeEnabled>
+        <oauthClientCredentialUser>kiosh.e2443b4a9d8e@agentforce.com</oauthClientCredentialUser>
+        <scopes>Api</scopes>
+        <scopes>Full</scopes>
+    </oauthConfig>
+    <oauthPolicy>
+        <ipRelaxation>ENFORCE</ipRelaxation>
+        <isTokenExchangeFlowEnabled>false</isTokenExchangeFlowEnabled>
+        <refreshTokenPolicy>zero</refreshTokenPolicy>
+    </oauthPolicy>
+</ConnectedApp>

@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Env files — credentials!
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+*.env
+
+# Vercel
+.vercel/
+
+# Salesforce
+*.key
+*.pem
+*.crt
+*.b64
+sfdx-project.json.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# TypeScript build cache
+*.tsbuildinfo
+next-env.d.ts
+
+# Credentials files — must never be committed
+CREDENTIALS*.md
+*CREDENTIAL*
+SECRETS*
+*.secret

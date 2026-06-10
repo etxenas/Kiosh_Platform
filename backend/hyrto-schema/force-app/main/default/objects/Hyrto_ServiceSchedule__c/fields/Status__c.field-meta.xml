@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status__c</fullName>
+    <label>Status</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Planerad</fullName><default>true</default><label>Planerad</label></value>
+            <value><fullName>Genomförd</fullName><default>false</default><label>Genomförd</label></value>
+            <value><fullName>Avbokad</fullName><default>false</default><label>Avbokad</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
