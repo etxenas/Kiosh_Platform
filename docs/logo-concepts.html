@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Kiosh Logo Koncept</title>
+<style>
+  body {
+    margin: 0;
+    padding: 40px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f5f5f0;
+    color: #1a1a1a;
+  }
+  h1 {
+    text-align: center;
+    margin: 0 0 8px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    text-align: center;
+    color: #777;
+    margin: 0 0 48px;
+    font-size: 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .logo-area {
+    padding: 48px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+  }
+  .card-1 .logo-area { background: linear-gradient(135deg, #1a3a5c 0%, #234770 100%); }
+  .card-2 .logo-area { background: #fafaf5; }
+  .card-3 .logo-area { background: #1a1a1a; }
+  .meta {
+    padding: 24px 32px 32px;
+  }
+  .meta h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .meta .nick {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .tagline {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 12px 0 4px;
+    font-style: italic;
+  }
+  .tagline-public { color: #1a3a5c; }
+  .tagline-internal {
+    color: #c0392b;
+    font-size: 14px;
+    font-style: normal;
+    margin-top: 8px;
+  }
+  .tagline-internal::before { content: "🤫 "; }
+  .palette {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .swatch {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .footer-note {
+    text-align: center;
+    color: #999;
+    font-size: 13px;
+    margin: 48px auto 16px;
+    max-width: 600px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Kiosh — Logo-koncept</h1>
+<p class="subtitle">Tre riktningar att välja från. Klicka i terminalen och säg vilken som tilltalar.</p>
+
+<div class="grid">
+
+  <!-- ──────────────────────── KONCEPT 1: Den nobla tronen ──────────────────────── -->
+  <div class="card card-1">
+    <div class="logo-area">
+      <svg width="380" height="180" viewBox="0 0 380 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Krona ovanför K -->
+        <g transform="translate(70, 20)">
+          <!-- Kronans bas -->
+          <rect x="0" y="40" width="80" height="10" fill="#d4a574" rx="2"/>
+          <!-- Tre uddar (subtila toalettstols-former) -->
+          <g fill="#d4a574">
+            <!-- Vänster udd: ovaler som antyder toa-sits sett från sidan -->
+            <ellipse cx="12" cy="22" rx="6" ry="14"/>
+            <circle cx="12" cy="8" r="4" fill="#d4a574"/>
+            <!-- Mitten udd: större krona-punkt -->
+            <path d="M 32 40 L 40 4 L 48 40 Z"/>
+            <circle cx="40" cy="6" r="5"/>
+            <!-- Höger udd -->
+            <ellipse cx="68" cy="22" rx="6" ry="14"/>
+            <circle cx="68" cy="8" r="4" fill="#d4a574"/>
+          </g>
+          <!-- Guld-pärlor på basen -->
+          <circle cx="20" cy="45" r="2.5" fill="#fff7e6"/>
+          <circle cx="40" cy="45" r="2.5" fill="#fff7e6"/>
+          <circle cx="60" cy="45" r="2.5" fill="#fff7e6"/>
+        </g>
+
+        <!-- Bokstaven K - stor och elegant -->
+        <text x="105" y="160" font-family="Georgia, serif" font-size="120" font-weight="700" fill="#d4a574">K</text>
+
+        <!-- Ordmärke -->
+        <text x="200" y="115" font-family="Georgia, serif" font-size="44" font-weight="400" fill="#fff" letter-spacing="0.05em">iosh</text>
+        <text x="200" y="140" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="400" fill="#d4a574" letter-spacing="0.4em">EST. 2026</text>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Koncept 1 — Den nobla tronen</h2>
+      <div class="nick">Premium · B2B · Bröllop · Bygg-events</div>
+      <div class="tagline tagline-public">"Smidigt. Sömlöst. Standard."</div>
+      <div class="tagline-internal">Kungen sitter där alla måste.</div>
+      <div class="palette">
+        <div class="swatch" style="background:#1a3a5c" title="Safirblå"></div>
+        <div class="swatch" style="background:#d4a574" title="Guld"></div>
+        <div class="swatch" style="background:#fff7e6" title="Cremevit"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────── KONCEPT 2: Den runda K:n ──────────────────────── -->
+  <div class="card card-2">
+    <div class="logo-area">
+      <svg width="380" height="180" viewBox="0 0 380 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- K format av toalettring sett uppifrån -->
+        <g transform="translate(40, 30)">
+          <!-- Yttre ring (toalettsits) -->
+          <ellipse cx="55" cy="60" rx="50" ry="55" fill="none" stroke="#2d5f3f" stroke-width="14"/>
+          <!-- Inre öppning -->
+          <ellipse cx="55" cy="60" rx="32" ry="38" fill="#fafaf5"/>
+          <!-- K-formens armar (utgår från ringen) -->
+          <!-- Övre arm -->
+          <path d="M 90 35 L 130 0" stroke="#2d5f3f" stroke-width="14" stroke-linecap="round"/>
+          <!-- Nedre arm -->
+          <path d="M 90 85 L 130 120" stroke="#2d5f3f" stroke-width="14" stroke-linecap="round"/>
+          <!-- Lite orange accent (locket halvöppet) -->
+          <path d="M 30 18 Q 55 5 85 18" stroke="#e87b4a" stroke-width="6" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- Ordmärke kiosh -->
+        <text x="200" y="105" font-family="Helvetica, Arial, sans-serif" font-size="56" font-weight="800" fill="#2d5f3f" letter-spacing="-0.03em">kiosh</text>
+        <text x="200" y="130" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#888" letter-spacing="0.25em">.SE · HYRTOALETTER</text>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Koncept 2 — Den runda K:n</h2>
+      <div class="nick">Funktionell · B2C kiosh.se · Festivaler · Allmän användning</div>
+      <div class="tagline tagline-public">"Pausa. När som helst. Var som helst."</div>
+      <div class="tagline-internal">Hyrtoalett när naturen kallar.</div>
+      <div class="palette">
+        <div class="swatch" style="background:#fafaf5" title="Kalkvitt"></div>
+        <div class="swatch" style="background:#2d5f3f" title="Hyrto-grön"></div>
+        <div class="swatch" style="background:#e87b4a" title="Accent-orange"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────── KONCEPT 3: Smile King ──────────────────────── -->
+  <div class="card card-3">
+    <div class="logo-area">
+      <svg width="380" height="180" viewBox="0 0 380 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lekfull kungens profil -->
+        <g transform="translate(50, 25)">
+          <!-- Skev krona -->
+          <g transform="rotate(-8, 50, 20)">
+            <path d="M 20 20 L 25 -2 L 40 18 L 50 -8 L 60 18 L 75 -2 L 80 20 Z" fill="#f4c430"/>
+            <circle cx="25" cy="-2" r="3" fill="#f4c430"/>
+            <circle cx="50" cy="-8" r="3" fill="#f4c430"/>
+            <circle cx="75" cy="-2" r="3" fill="#f4c430"/>
+          </g>
+
+          <!-- Huvud (cirkel) -->
+          <circle cx="50" cy="60" r="35" fill="#f4c430"/>
+
+          <!-- Ögon (slutna, glada) -->
+          <path d="M 38 55 Q 42 50 46 55" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 54 55 Q 58 50 62 55" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+          <!-- Stort leende -->
+          <path d="M 32 68 Q 50 85 68 68" stroke="#1a1a1a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+          <!-- Litet streck för hakan/skägg-antydan -->
+          <path d="M 45 78 Q 50 82 55 78" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- Ordmärke -->
+        <text x="170" y="95" font-family="Helvetica, Arial, sans-serif" font-size="56" font-weight="900" fill="#f4c430" letter-spacing="-0.04em">kiosh</text>
+        <text x="172" y="120" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#888" letter-spacing="0.3em">SKITKUL SEDAN 2026</text>
+      </svg>
+    </div>
+    <div class="meta">
+      <h2>Koncept 3 — Smile King</h2>
+      <div class="nick">Kaxig · Viral · TikTok-vänlig · Festival-truck-skylten</div>
+      <div class="tagline tagline-public">"Er skit är vår potential."</div>
+      <div class="tagline-internal">Mic drop. Den är för bra. 🎤⬇️</div>
+      <div class="palette">
+        <div class="swatch" style="background:#1a1a1a" title="Matt svart"></div>
+        <div class="swatch" style="background:#f4c430" title="Senapsgul"></div>
+        <div class="swatch" style="background:#ffffff" title="Vit"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer-note">
+  Allt här är moodboard-prototyper, inte färdiga loggor. För skarp produktion: ge dessa till en designer som referens.<br>
+  <strong>Smart drag:</strong> bygg en familj där samma K funkar i alla tre stilar (premium / funktion / lekfull).
+</p>
+
+</body>
+</html>

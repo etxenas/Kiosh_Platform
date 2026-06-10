@@ -32,3 +32,9 @@ cd frontend && npm install && npm run dev
 ```
 
 Se respektive mapps README för detaljer.
+
+## Deployment
+
+Auto-deploy on push to `main`:
+- `backend/`  → https://salesforce-backend-zeta.vercel.app
+- `frontend/` → https://frontend-beryl-six-65.vercel.app
