@@ -451,7 +451,14 @@ module.exports = async function handler(req, res) {
         leadFields.Hyrto_PostalCode__c = data.postalCode;
         leadFields.PostalCode = data.postalCode;
       }
-      if (data.hubId) leadFields.Hyrto_Hub__c = data.hubId;
+      // Hyrto_Hub__c är en Lookup som kräver riktigt Salesforce-id (15/18 tecken).
+      // Frontend kan skicka mock-id ("hub-01") från lokala fixtures — skippa då från create/update så leadet ändock skapas.
+      // (Annars 500: "Hub: id value of incorrect type" och hela lead-skalet uteblir = drop-out i funnel.)
+      if (data.hubId && /^[a-zA-Z0-9]{15}([a-zA-Z0-9]{3})?$/.test(data.hubId)) {
+        leadFields.Hyrto_Hub__c = data.hubId;
+      } else if (data.hubId) {
+        console.warn('Skipping invalid hubId for Hyrto_Hub__c (looks like mock):', data.hubId);
+      }
       if (data.startDate) leadFields.Hyrto_StartDate__c = data.startDate;
       if (data.endDate) leadFields.Hyrto_EndDate__c = data.endDate;
       if (data.serviceLevel) leadFields.Hyrto_ServiceLevel__c = data.serviceLevel;
