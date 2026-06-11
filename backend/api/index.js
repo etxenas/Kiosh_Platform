@@ -93,8 +93,113 @@ module.exports = async function handler(req, res) {
 
     // ── Hubs ──
     if (path === '/api/hubs' && req.method === 'GET') {
-      const r = await sf.query('SELECT Id, Name, Address__c, PostalCode__c, IsActive__c, BaseDeliveryFee__c, MediumDeliveryFee__c, FarDeliveryFee__c, MediumRadiusKm__c, FarRadiusKm__c, MaxDeliveryRadiusKm__c FROM Hyrto_Hub__c ORDER BY Name');
+      const r = await sf.query('SELECT Id, Name, Address__c, PostalCode__c, IsActive__c, BaseDeliveryFee__c, MediumDeliveryFee__c, FarDeliveryFee__c, MediumRadiusKm__c, FarRadiusKm__c, MaxDeliveryRadiusKm__c FROM Hyrto_Hub__c WHERE IsActive__c = true ORDER BY Name');
       sendJSON(res, 200, { records: r.records, totalSize: r.totalSize });
+      return;
+    }
+
+    // ── Katalog: produkter (toaletter) med pris ──
+    if (path === '/api/catalog/products' && req.method === 'GET') {
+      const r = await sf.query(`
+        SELECT Id, Product2.Id, Product2.Name, Product2.ProductCode, Product2.Family, Product2.Description, UnitPrice
+        FROM PricebookEntry
+        WHERE Pricebook2.IsStandard = true
+          AND IsActive = true
+          AND Product2.IsActive = true
+          AND Product2.Family = 'Toalett'
+        ORDER BY UnitPrice
+      `);
+      const products = (r.records || []).map(pbe => ({
+        id: pbe.Product2.Id,
+        pricebookEntryId: pbe.Id,
+        name: pbe.Product2.Name,
+        productCode: pbe.Product2.ProductCode,
+        family: pbe.Product2.Family,
+        description: pbe.Product2.Description,
+        pricePerDay: pbe.UnitPrice,
+      }));
+      sendJSON(res, 200, { products, totalSize: products.length });
+      return;
+    }
+
+    // ── Katalog: addons (tillval) med pris ──
+    if (path === '/api/catalog/addons' && req.method === 'GET') {
+      const r = await sf.query(`
+        SELECT Id, Product2.Id, Product2.Name, Product2.ProductCode, Product2.Family, Product2.Description, UnitPrice
+        FROM PricebookEntry
+        WHERE Pricebook2.IsStandard = true
+          AND IsActive = true
+          AND Product2.IsActive = true
+          AND Product2.Family = 'Tillval'
+        ORDER BY UnitPrice
+      `);
+      const addons = (r.records || []).map(pbe => ({
+        id: pbe.Product2.Id,
+        pricebookEntryId: pbe.Id,
+        name: pbe.Product2.Name,
+        productCode: pbe.Product2.ProductCode,
+        family: pbe.Product2.Family,
+        description: pbe.Product2.Description,
+        pricePerDay: pbe.UnitPrice,
+      }));
+      sendJSON(res, 200, { addons, totalSize: addons.length });
+      return;
+    }
+
+    // ── Katalog: tillgänglighet per produkt per hub i en datumperiod ──
+    // GET /api/catalog/availability?fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD[&hubId=...]
+    // Returnerar: { availability: { [hubId]: { [productId]: availableCount, total } } }
+    if (path === '/api/catalog/availability' && req.method === 'GET') {
+      const fromDate = params.get('fromDate');
+      const toDate = params.get('toDate');
+      if (!fromDate || !toDate) { sendJSON(res, 400, { error: 'fromDate & toDate required (YYYY-MM-DD)' }); return; }
+      const hubFilter = params.get('hubId');
+
+      // 1) Inventarie: alla Asset med Available status, kopplade till Hub + Product
+      // Asset har custom field Hyrto_Hub__c (Lookup till Hyrto_Hub__c) seedat tidigare.
+      let assetQ = `SELECT Id, Hyrto_Hub__c, Product2Id, Status FROM Asset WHERE Hyrto_Hub__c != null AND Product2Id != null AND Status = 'Available'`;
+      if (hubFilter) assetQ += ` AND Hyrto_Hub__c = '${hubFilter.replace(/'/g, "\\'")}'`;
+      const assets = await sf.query(assetQ);
+
+      // 2) Bokade Assets i överlappande tidsperiod
+      // SF DateTime-fields kräver ISO-format utan citattecken. Konvertera datum till midnatt-grindar.
+      const fromIso = `${fromDate}T00:00:00Z`;
+      const toIso = `${toDate}T23:59:59Z`;
+      let bookingQ = `SELECT Id, Hub__c, Asset__c FROM Hyrto_Booking__c WHERE StartDateTime__c <= ${toIso} AND EndDateTime__c >= ${fromIso} AND Status__c IN ('Bokad','Closed Won','Pågående')`;
+      if (hubFilter) bookingQ += ` AND Hub__c = '${hubFilter.replace(/'/g, "\\'")}'`;
+      const bookings = await sf.query(bookingQ);
+
+      // 3) Bygg: per hub, per product, count
+      const totals = {}; // {hubId: {productId: count}}
+      for (const a of (assets.records || [])) {
+        const hub = a.Hyrto_Hub__c;
+        const prod = a.Product2Id;
+        if (!totals[hub]) totals[hub] = {};
+        totals[hub][prod] = (totals[hub][prod] || 0) + 1;
+      }
+      // Bygg lookup för asset -> (hub, product) för att kunna sub:a bokade
+      const assetMap = {};
+      for (const a of (assets.records || [])) {
+        assetMap[a.Id] = { hub: a.Hyrto_Hub__c, product: a.Product2Id };
+      }
+      const booked = {}; // {hubId: {productId: count}}
+      for (const b of (bookings.records || [])) {
+        if (!b.Asset__c) continue;
+        const am = assetMap[b.Asset__c];
+        if (!am) continue;
+        if (!booked[am.hub]) booked[am.hub] = {};
+        booked[am.hub][am.product] = (booked[am.hub][am.product] || 0) + 1;
+      }
+      const availability = {};
+      for (const hub of Object.keys(totals)) {
+        availability[hub] = {};
+        for (const prod of Object.keys(totals[hub])) {
+          const total = totals[hub][prod];
+          const used = (booked[hub] && booked[hub][prod]) || 0;
+          availability[hub][prod] = Math.max(0, total - used);
+        }
+      }
+      sendJSON(res, 200, { availability, fromDate, toDate, totalAssets: (assets.records || []).length, overlappingBookings: (bookings.records || []).length });
       return;
     }
 
@@ -127,13 +232,16 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    // ── Availability ──
+    // ── Availability (raw bookings i tidsperioden) ──
     if (path === '/api/availability' && req.method === 'GET') {
       const fromDate = params.get('fromDate');
       const toDate = params.get('toDate');
-      if (!fromDate || !toDate) { sendJSON(res, 400, { error: 'fromDate & toDate required' }); return; }
-      let q = `SELECT Id, Hub__c, Asset__c, Asset__r.Name, StartDateTime__c, EndDateTime__c, Status__c FROM Hyrto_Booking__c WHERE StartDateTime__c <= ${toDate} AND EndDateTime__c >= ${fromDate}`;
-      if (params.get('hubId')) q += ` AND Hub__c = '${params.get('hubId')}'`;
+      if (!fromDate || !toDate) { sendJSON(res, 400, { error: 'fromDate & toDate required (YYYY-MM-DD)' }); return; }
+      // SF DateTime-fields kräver ISO-literal utan citattecken.
+      const fromIso = `${fromDate}T00:00:00Z`;
+      const toIso = `${toDate}T23:59:59Z`;
+      let q = `SELECT Id, Hub__c, Asset__c, Asset__r.Name, StartDateTime__c, EndDateTime__c, Status__c FROM Hyrto_Booking__c WHERE StartDateTime__c <= ${toIso} AND EndDateTime__c >= ${fromIso}`;
+      if (params.get('hubId')) q += ` AND Hub__c = '${params.get('hubId').replace(/'/g, "\\'")}'`;
       sendJSON(res, 200, await sf.query(q));
       return;
     }
