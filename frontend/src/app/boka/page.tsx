@@ -119,26 +119,21 @@ export default function BokaPage() {
     return () => { cancelled = true; };
   }, [booking.startDate, booking.endDate]);
 
-  // När produkter väljs: kolla om current hub kan tillgodose dem. Annars byt automatiskt.
-  // "Vi levererar från en enda hub" — om ingen hub kan tillgodose, visa kontakt-meddelande.
+  // När produkter väljs: jamför billigaste-hub-i-området med billigaste-hub-som-har-allt.
+  // Om de skiljer sig: vi måste byta — visa banner med extra leveranskostnad.
+  // Om INGEN hub har allt: visa kontakt-meddelande, lås nästa-knapp.
   useEffect(() => {
     if (!availability || reachableHubs.length === 0 || booking.selectedProducts.length === 0) {
       setHubChange(null);
       setHubUnavailable(false);
       return;
     }
-    const current = booking.selectedHub;
-    const currentHasAll = current && reachableHubs.find(h => h.id === current.id)
-      && booking.selectedProducts.every(sp => {
-        const c = availability.availability[current.id]?.[sp.productId] ?? 0;
-        return c >= sp.quantity;
-      });
-    if (currentHasAll) {
-      setHubChange(null);
-      setHubUnavailable(false);
-      return;
-    }
-    // current har inte alla — hitta billigaste hub som har
+    // 1) Billigaste hub UTAN hänsyn till produktval (= det vi auto-valde i StepPostalCode)
+    const baseline = [...reachableHubs].sort((a, b) => {
+      if (a.deliveryFee !== b.deliveryFee) return a.deliveryFee - b.deliveryFee;
+      return a.distanceKm - b.distanceKm;
+    })[0];
+    // 2) Billigaste hub som har ALLA valda produkter i tidsperioden
     const cheapestWithAll = findCheapestHubWithAll(reachableHubs, availability, booking.selectedProducts);
     if (!cheapestWithAll) {
       setHubChange(null);
@@ -146,17 +141,22 @@ export default function BokaPage() {
       return;
     }
     setHubUnavailable(false);
-    if (current && cheapestWithAll.id !== current.id) {
-      // Byt hub — visa banner med extra-fee-info
-      const extra = cheapestWithAll.deliveryFee - (current.deliveryFee || 0);
+    // 3) Om "hub-som-har-allt" skiljer sig från baseline — visa banner + gör bytet
+    if (cheapestWithAll.id !== baseline.id) {
+      const extra = cheapestWithAll.deliveryFee - baseline.deliveryFee;
       setHubChange({
-        from: current.name,
+        from: baseline.name,
         to: cheapestWithAll.name,
         extraFee: Math.max(0, extra),
       });
-      updateBooking({ selectedHub: cheapestWithAll });
+      if (booking.selectedHub?.id !== cheapestWithAll.id) {
+        updateBooking({ selectedHub: cheapestWithAll });
+      }
     } else {
       setHubChange(null);
+      if (booking.selectedHub?.id !== baseline.id) {
+        updateBooking({ selectedHub: baseline });
+      }
     }
     // updateBooking är stabil (useCallback med tom deps), exkluderas från deps för att undvika TDZ
     // eslint-disable-next-line react-hooks/exhaustive-deps
