@@ -272,3 +272,25 @@ export function reachableHubsFor(customerPc: string, hubs: Hub[]): ReachableHub[
   out.sort((a, b) => a.distanceKm - b.distanceKm);
   return out;
 }
+
+// Hittar den billigaste hubben i `reachableHubs` som har ALLA önskade produkter
+// (productId → quantity) tillgängliga i `availability`. Returnerar null om ingen enskild
+// hub kan tillgodose hela bokningen (kund måste kontakta oss).
+//
+// Sortering: lägst deliveryFee först; vid lika fee, kortast distance.
+export function findCheapestHubWithAll(
+  reachableHubs: ReachableHub[],
+  availability: AvailabilityResult | null,
+  wanted: Array<{ productId: string; quantity: number }>
+): ReachableHub | null {
+  if (!availability || wanted.length === 0) return null;
+  const candidates = reachableHubs.filter((h) => {
+    const hubAvail = availability.availability[h.id] || {};
+    return wanted.every((w) => (hubAvail[w.productId] ?? 0) >= w.quantity);
+  });
+  candidates.sort((a, b) => {
+    if (a.deliveryFee !== b.deliveryFee) return a.deliveryFee - b.deliveryFee;
+    return a.distanceKm - b.distanceKm;
+  });
+  return candidates[0] || null;
+}

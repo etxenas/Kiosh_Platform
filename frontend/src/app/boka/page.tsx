@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { BookingState, BookingStep, Addon, SelectedProduct, Hub, ServiceLevelType, Product } from '@/lib/types';
-import { fetchHubs, fetchProducts, fetchAddons, fetchAvailability, AvailabilityResult } from '@/lib/catalog';
+import { fetchHubs, fetchProducts, fetchAddons, fetchAvailability, AvailabilityResult, ReachableHub, findCheapestHubWithAll } from '@/lib/catalog';
 import { calculatePrice, isExpressOrder } from '@/lib/pricing';
 import StepPostalCode from '@/components/StepPostalCode';
 import StepDates from '@/components/StepDates';
@@ -66,6 +66,8 @@ export default function BokaPage() {
   const [booking, setBooking] = useState<BookingState>(initialBookingState);
   const [submitting, setSubmitting] = useState(false);
 
+  // updateBooking måste deklareras INNAN effects som använder den. Försökte tidigare i annan ordning.
+  // (Kvarvarande deklaration nedan behålls för kompatibilitet — useCallback är idempotent.)
   // SF-katalog: hubs, toaletter, tillval
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -75,6 +77,11 @@ export default function BokaPage() {
 
   // Tillgänglighet (ändras när datum väljs)
   const [availability, setAvailability] = useState<AvailabilityResult | null>(null);
+
+  // Reachable hubs från kundens postnummer (alla i räckvidd), och info om eventuellt hub-byte
+  const [reachableHubs, setReachableHubs] = useState<ReachableHub[]>([]);
+  const [hubChange, setHubChange] = useState<{ from: string; to: string; extraFee: number } | null>(null);
+  const [hubUnavailable, setHubUnavailable] = useState(false);
 
   // Ladda katalog vid mount
   useEffect(() => {
@@ -111,6 +118,49 @@ export default function BokaPage() {
     })();
     return () => { cancelled = true; };
   }, [booking.startDate, booking.endDate]);
+
+  // När produkter väljs: kolla om current hub kan tillgodose dem. Annars byt automatiskt.
+  // "Vi levererar från en enda hub" — om ingen hub kan tillgodose, visa kontakt-meddelande.
+  useEffect(() => {
+    if (!availability || reachableHubs.length === 0 || booking.selectedProducts.length === 0) {
+      setHubChange(null);
+      setHubUnavailable(false);
+      return;
+    }
+    const current = booking.selectedHub;
+    const currentHasAll = current && reachableHubs.find(h => h.id === current.id)
+      && booking.selectedProducts.every(sp => {
+        const c = availability.availability[current.id]?.[sp.productId] ?? 0;
+        return c >= sp.quantity;
+      });
+    if (currentHasAll) {
+      setHubChange(null);
+      setHubUnavailable(false);
+      return;
+    }
+    // current har inte alla — hitta billigaste hub som har
+    const cheapestWithAll = findCheapestHubWithAll(reachableHubs, availability, booking.selectedProducts);
+    if (!cheapestWithAll) {
+      setHubChange(null);
+      setHubUnavailable(true);
+      return;
+    }
+    setHubUnavailable(false);
+    if (current && cheapestWithAll.id !== current.id) {
+      // Byt hub — visa banner med extra-fee-info
+      const extra = cheapestWithAll.deliveryFee - (current.deliveryFee || 0);
+      setHubChange({
+        from: current.name,
+        to: cheapestWithAll.name,
+        extraFee: Math.max(0, extra),
+      });
+      updateBooking({ selectedHub: cheapestWithAll });
+    } else {
+      setHubChange(null);
+    }
+    // updateBooking är stabil (useCallback med tom deps), exkluderas från deps för att undvika TDZ
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availability, reachableHubs, booking.selectedProducts, booking.selectedHub]);
 
   const currentStepIndex = stepOrder.indexOf(booking.step);
 
@@ -237,7 +287,16 @@ export default function BokaPage() {
               selectedHub={booking.selectedHub}
               selectedProducts={booking.selectedProducts}
               hubs={hubs}
-              onUpdate={(updates) => updateBooking(updates)}
+              onUpdate={(updates) => {
+                updateBooking(updates);
+                // Låt boka/page även få reda på alla reachable hubs så vi kan auto-byta senare
+                const pc = (updates as { deliveryAddress?: { postalCode?: string } }).deliveryAddress?.postalCode;
+                if (pc && pc.replace(/\s/g, '').length === 5) {
+                  import('@/lib/catalog').then(({ reachableHubsFor }) => {
+                    setReachableHubs(reachableHubsFor(pc, hubs));
+                  });
+                }
+              }}
               onNext={() => goToStep('dates')}
             />
           )}
@@ -266,6 +325,9 @@ export default function BokaPage() {
               selectedProducts={booking.selectedProducts}
               selectedHub={booking.selectedHub}
               availability={availability}
+              reachableHubs={reachableHubs}
+              hubChange={hubChange}
+              hubUnavailable={hubUnavailable}
               onUpdate={(selectedProducts: SelectedProduct[]) => updateBooking({ selectedProducts })}
               onBack={() => goToStep('dates')}
               onNext={() => {

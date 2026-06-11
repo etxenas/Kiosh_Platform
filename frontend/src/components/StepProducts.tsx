@@ -1,13 +1,16 @@
 'use client';
 
 import { Product, SelectedProduct, Hub } from '@/lib/types';
-import { AvailabilityResult, getAvailableCountFor } from '@/lib/catalog';
+import { AvailabilityResult, ReachableHub, getAvailableCountFor } from '@/lib/catalog';
 
 interface Props {
   products: Product[];
   selectedProducts: SelectedProduct[];
   selectedHub: Hub | null;
   availability: AvailabilityResult | null;
+  reachableHubs: ReachableHub[];
+  hubChange: { from: string; to: string; extraFee: number } | null;
+  hubUnavailable: boolean;
   onUpdate: (selected: SelectedProduct[]) => void;
   onBack: () => void;
   onNext: () => void;
@@ -38,10 +41,23 @@ export default function StepProducts({
   selectedProducts,
   selectedHub,
   availability,
+  reachableHubs,
+  hubChange,
+  hubUnavailable,
   onUpdate,
   onBack,
   onNext,
 }: Props) {
+  // Tillgänglighet "totalt från någon hub i räckvidd" — används för att visa till-
+  // gängliga toaletter även när selectedHub saknar dem (vi kan ju byta hub).
+  const totalAvailableForProduct = (productId: string): number => {
+    if (!availability) return 99; // ej hämtat än
+    let sum = 0;
+    for (const h of reachableHubs) {
+      sum += availability.availability[h.id]?.[productId] ?? 0;
+    }
+    return sum;
+  };
   const toggleProduct = (productId: string) => {
     const existing = getSelected(productId, selectedProducts);
     if (existing) {
@@ -51,12 +67,17 @@ export default function StepProducts({
     }
   };
 
-  // Lokal helper: vad är maxQty för en produkt? (selectedHub + availability från SF)
+  // Maximalt antal av en produkt = högsta tillgängligheten över alla räckvidd-hubs
+  // (eftersom vi kan byta hub om nödvändigt; men vi levererar bara från EN hub,
+  // så max för en enskild produkt är max per hub).
   const maxQtyFor = (productId: string): number => {
-    if (!selectedHub) return 999; // ingen hub vald → belägg ingen begränsning
-    const c = getAvailableCountFor(availability, selectedHub.id, productId);
-    if (c === null) return 999; // tillgänglighet inte hämtad än
-    return c;
+    if (!availability) return 999;
+    let max = 0;
+    for (const h of reachableHubs) {
+      const c = availability.availability[h.id]?.[productId] ?? 0;
+      if (c > max) max = c;
+    }
+    return Math.max(1, max);
   };
 
   const changeQuantity = (productId: string, delta: number) => {
@@ -81,19 +102,58 @@ export default function StepProducts({
         <p className="text-gray-500">
           Du kan välja flera modeller — perfekt för större evenemang!
         </p>
-        {selectedHub && (
+        {selectedHub && !hubUnavailable && (
           <p className="text-sm text-green-700 mt-2 bg-green-100 inline-block rounded-full px-4 py-1">
-            📍 Levereras från {selectedHub.name} ({selectedHub.distanceKm} km)
+            📍 Levereras från {selectedHub.name} ({selectedHub.distanceKm} km) — {selectedHub.deliveryFee} kr
           </p>
         )}
       </div>
 
+      {/* Banner: hub-byte krävs */}
+      {hubChange && !hubUnavailable && (
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-5 animate-pop-in">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">📦</span>
+            <div className="flex-1">
+              <p className="font-bold text-amber-900 text-sm">Vi byter depot åt dig</p>
+              <p className="text-xs text-amber-800 mt-1">
+                På grund av dina val levererar vi nu från <strong>{hubChange.to}</strong>
+                {hubChange.extraFee > 0 ? (
+                  <> istället för {hubChange.from} — leveranskostnaden blir <strong>{hubChange.extraFee} kr högre</strong>.</>
+                ) : (
+                  <> (samma leveranskostnad).</>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Banner: ingen enda hub kan tillgodose allt */}
+      {hubUnavailable && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-5 animate-pop-in">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">✉️</span>
+            <div className="flex-1">
+              <p className="font-bold text-red-900 text-sm">Vi kan inte leverera allt från en enda depot</p>
+              <p className="text-xs text-red-800 mt-1">
+                Tyvärr har vi inte alla dina val tillgängliga på en och samma depot under perioden.
+                Vi levererar bara från en depot per bokning — kontakta oss på <a href="mailto:info@kiosh.se" className="font-semibold underline">info@kiosh.se</a> så ordnar vi det manuellt.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3 mb-6 stagger">
         {products.map((product) => {
-          const availRaw = selectedHub ? getAvailableCountFor(availability, selectedHub.id, product.id) : null;
-          // null = ej hämtat (visa som tillgänglig); siffra = riktig tillgänglighet
-          const available = availRaw === null ? 99 : availRaw;
-          const knownAvailable = availRaw !== null;
+          // Använd total över alla räckvidd-hubs eftersom vi kan auto-byta hub.
+          const totalAvail = totalAvailableForProduct(product.id);
+          const inSelectedHub = selectedHub ? getAvailableCountFor(availability, selectedHub.id, product.id) : null;
+          const available = totalAvail;
+          const knownAvailable = availability !== null;
+          // Markera om denna produkt skulle kräva hub-byte (finns på annan hub men inte vald)
+          const requiresHubChange = selectedHub && availability && (inSelectedHub ?? 0) === 0 && totalAvail > 0;
           const selected = getSelected(product.id, selectedProducts);
           const isChecked = !!selected;
           const color = productColors[product.productCode] || 'from-gray-500 to-gray-600';
@@ -138,9 +198,16 @@ export default function StepProducts({
                         <h3 className="font-bold text-gray-900 text-lg">{product.name}</h3>
                         <p className="text-gray-500 text-sm mt-0.5">{product.description}</p>
                         {available > 0 ? (
-                          <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 rounded-full px-2.5 py-0.5 mt-1.5">
-                            {knownAvailable ? `${available} st tillgängliga` : 'Tillgänglig'}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 rounded-full px-2.5 py-0.5">
+                              {knownAvailable ? `${available} st tillgängliga` : 'Tillgänglig'}
+                            </span>
+                            {requiresHubChange && (
+                              <span className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-100 rounded-full px-2.5 py-0.5">
+                                📦 kräver byte av depot
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="inline-flex items-center text-xs font-medium text-red-600 bg-red-100 rounded-full px-2.5 py-0.5 mt-1.5">
                             Fullbokad
@@ -216,7 +283,7 @@ export default function StepProducts({
         </button>
         <button
           onClick={onNext}
-          disabled={selectedProducts.length === 0}
+          disabled={selectedProducts.length === 0 || hubUnavailable}
           className="bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] text-white px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
         >
           Tillval →

@@ -146,12 +146,13 @@ export default function StepPostalCode({
       const reachableHubs = reachableHubsFor(clean, catalogHubs);
       setHubs(reachableHubs);
 
-      // Behåll befintligt val om det fortfarande är i listan, annars välj bästa (närmast)
-      const stillValid = chosenHub && reachableHubs.find((h) => h.id === chosenHub.id);
-      const pickedHub: Hub | null = stillValid
-        ? reachableHubs.find((h) => h.id === stillValid.id) || stillValid
-        : reachableHubs[0] || null;
-      setChosenHub(pickedHub);
+      // Auto-välj billigaste hub (vid lika fee → närmaste). Kunden ser inte detta val.
+      // Först senare — i StepProducts — kan vi behov ompröva vilken hub som används.
+      const cheapest = [...reachableHubs].sort((a, b) => {
+        if (a.deliveryFee !== b.deliveryFee) return a.deliveryFee - b.deliveryFee;
+        return a.distanceKm - b.distanceKm;
+      })[0] || null;
+      setChosenHub(cheapest);
       setChecking(false);
     }, 400);
   };
@@ -317,40 +318,20 @@ export default function StepPostalCode({
         </div>
       )}
 
-      {!checking && pcValid && hubs.length > 0 && (
-        <div className="space-y-2 mb-6 animate-fade-in">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            ✓ Välj hub ({hubs.length} {hubs.length === 1 ? 'tillgänglig' : 'tillgängliga'})
-          </p>
-          {hubs.map((hub) => {
-            const isChosen = chosenHub?.id === hub.id;
-            return (
-              <button
-                key={hub.id}
-                type="button"
-                onClick={() => handleSelectHub(hub)}
-                className={`w-full text-left rounded-xl p-3 border-2 transition-all ${
-                  isChosen
-                    ? 'border-[#2D9C4A] bg-green-50 shadow-sm'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">
-                      {hub.name}
-                      {isChosen && <span className="text-[#2D9C4A] text-xs ml-2">✓ Vald</span>}
-                    </p>
-                    <p className="text-xs text-gray-500">{hub.address}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm text-gray-900">{hub.distanceKm} km</p>
-                    <p className="text-xs text-[#FF6B35] font-medium">{hub.deliveryFee} kr</p>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+      {!checking && pcValid && hubs.length > 0 && chosenHub && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 animate-fade-in">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">✅</span>
+            <div className="flex-1">
+              <p className="font-semibold text-green-900 text-sm">Vi kan leverera till dig</p>
+              <p className="text-xs text-green-700 mt-0.5">
+                Leveranskostnad från <strong>{chosenHub.deliveryFee} kr</strong>
+                {hubs.length > 1 && (
+                  <span className="text-green-600"> — väljer billigaste tillgängliga depot automatiskt</span>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -371,8 +352,8 @@ export default function StepPostalCode({
          !streetValid ? 'Fyll i gatuadress' :
          !pcValid ? 'Fyll i postnummer' :
          !cityValid ? 'Fyll i postort' :
-         hubs.length === 0 ? 'Hittar ingen hub' :
-         !chosenHub ? 'Välj hub' :
+         hubs.length === 0 ? 'Hittar ingen depot' :
+         !chosenHub ? 'Hittar ingen depot' :
          'Fortsätt →'}
       </button>
     </div>
