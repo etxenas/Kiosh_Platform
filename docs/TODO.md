@@ -39,10 +39,16 @@ _Senast uppdaterad: 2026-06-11_
 
 ### Order.TotalAmount räknar bara produkt-rader, inte dagar/leverans
 - Just nu: `1500 kr` (1 toalett × 1500 kr/dag, oavsett dagar)
-- Riktig: dagar × pris + leverans
+- Riktig: dagar × pris + leverans (med långhyra-rabatt)
 - **Lösning:** Quantity = antal dagar (men då tappar vi "antal toaletter"-rapport)
 - **Alt:** Lämna som-är, använd `Hyrto_Booking__c.TotalPrice__c` som facit
 - **Beslut tas senare**
+
+### Premium/HCP/Lyx-priser matchar inte Sanifix än
+- Standard = 974 kr/dag (Sanifix Holken-matchat)
+- Premium 1500 / HCP 1800 / Lyx 2500 — från samples, ej marknadsverifierade
+- När vi vet Sanifix Premium/HCP-priser, uppdatera PricebookEntry
+- Långhyra-rabatten 50 kr/dag gäller alla modeller från dag 5
 
 ### Service-level-priser i SF istället för hårdkodade
 - Just nu i `frontend/src/lib/api.ts` `SERVICE_LEVELS`-array
@@ -97,3 +103,9 @@ _Senast uppdaterad: 2026-06-11_
 - Distance/DeliveryFee propageras Lead → Order → Booking
 - Hub-val gömt i UI, auto-byte med varning vid behov
 - Email-fallback (Task på Contact) [riktig leverans pausad]
+- **Sanifix-matchad prismodell:**
+  - Standardtoalett 974 kr/dag (Sanifix Holken 3896/4)
+  - Extrastädning 1948 kr/tillfälle
+  - Långhyra-rabatt: dag 5+ kostar 50 kr/dag/st (matchar Sanifix exakt)
+  - StepReview visar uppdelningen 'Dag 1-4' + 'Dag 5+' tydligt
+  - Marknadsanalys-Excel uppdaterad i `docs/marknadsanalys/`
