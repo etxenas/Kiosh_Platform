@@ -30,6 +30,7 @@ Kiosh_Platform/
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Deploy-workflow, Vercel-konfiguration, troubleshooting |
 | [`docs/BRAND.md`](docs/BRAND.md) | Logo-koncept, taglines, varumärkesstrategi |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Versionslogg |
+| [`docs/TODO.md`](docs/TODO.md) | Backlog, pausade items och nice-to-have |
 | [`docs/SECURITY.md`](docs/SECURITY.md) | Säkerhetschecklista inför produktion |
 | [`docs/logo-concepts.html`](docs/logo-concepts.html) | Interaktiv preview av logo-koncept |
 | [`docs/design-dokument.md`](docs/design-dokument.md) | Ursprungligt designdokument |

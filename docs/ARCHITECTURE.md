@@ -86,13 +86,14 @@ Create Order + OrderItems (via PricebookEntries)
 
 #### Custom objekt
 - `Hyrto_Hub__c` — depåer
-- `Hyrto_Asset__c` — fysiska toaletter
-- `Hyrto_Booking__c` — bokningar
+- `Hyrto_Booking__c` — bokningar (Asset__c, Hub__c, Account__c, DistanceKm__c, DeliveryFee__c)
+- `Hyrto_Addon__c` — tillägg på bokning
 - `Hyrto_ServiceLog__c` — servicebesök
 - `Hyrto_Inspection__c` — besiktningar
 - `Hyrto_ServiceSchedule__c` — schemalagd service
-- `Addon_Product__c` — tillval-katalog
-- `Booking_Slot__c` — tidsslotar för uthyrning
+
+**OBS:** Fysiska toaletter lagras på standard `Asset` (inte custom `Hyrto_Asset__c`)
+med custom lookup `Asset.Hyrto_Hub__c` → `Hyrto_Hub__c`. 25 seedade Assets från 2026-06-11.
 
 #### Custom fields på standardobjekt
 **Lead:**
@@ -100,6 +101,7 @@ Create Order + OrderItems (via PricebookEntries)
 - `Hyrto_LastStep__c` — sista nådda funnel-steg (för dropout-analys)
 - `Hyrto_LastActivity__c`
 - `Hyrto_PostalCode__c`, `Hyrto_Hub__c`, `Hyrto_StartDate__c`, `Hyrto_EndDate__c`
+- `Hyrto_DistanceKm__c`, `Hyrto_DeliveryFee__c` (2026-06-11)
 - `Hyrto_ServiceLevel__c`, `Hyrto_Products__c`, `Hyrto_Addons__c`
 - `Hyrto_DeliveryAddress__c`, `Hyrto_TotalPrice__c`, `Hyrto_IsB2B__c`
 - `Hyrto_BillingOrgNumber__c`, `Hyrto_BillingCompanyName__c`
@@ -115,7 +117,9 @@ Create Order + OrderItems (via PricebookEntries)
 
 **Account:** `Hyrto_OrgNumber__c`, `Hyrto_BillingReference__c`
 
-**Order:** `Hyrto_Hub__c`, `Hyrto_ServiceLevel__c`, `Hyrto_SessionId__c`, `Hyrto_BillingReference__c`, `Hyrto_StartDateTime__c`, `Hyrto_EndDateTime__c`
+**Order:** `Hyrto_Hub__c`, `Hyrto_Booking__c` (2026-06-11), `Hyrto_DistanceKm__c`, `Hyrto_DeliveryFee__c`, `Hyrto_ServiceLevel__c`, `Hyrto_SessionId__c`, `Hyrto_BillingReference__c`, `Hyrto_StartDateTime__c`, `Hyrto_EndDateTime__c`. `ContractId` sätts mot auto-skapat Contract.
+
+**Asset (standard):** `Hyrto_Hub__c` (2026-06-11) — Lookup till Hyrto_Hub__c, möjliggör inventarieräkning per hub + reservation vid bokning.
 
 #### Record Types
 - **Lead.Hyrto_B2C_Lead** (`012fj000005XXOyAAO`)
