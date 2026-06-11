@@ -395,13 +395,26 @@ module.exports = async function handler(req, res) {
       console.log('Extracted IDs:', { accountId, contactId, oppId });
 
       // Mark Opp as Closed Won, set Amount, link to Account
-      // Bugg-fix 2: propagera Hyrto_SessionId__c till Opp för spårbarhet
+      // Propagera ALLA relevanta Hyrto-fält från Lead till Opp så Opp blir källa för rapporter.
       try {
         await sf.update('Opportunity', oppId, {
           StageName: 'Closed Won',
           Amount: totalPrice,
           CloseDate: closeDate,
           Hyrto_SessionId__c: lead.Hyrto_SessionId__c || undefined,
+          Hyrto_Hub__c: lead.Hyrto_Hub__c || undefined,
+          Hyrto_StartDate__c: lead.Hyrto_StartDate__c || undefined,
+          Hyrto_EndDate__c: lead.Hyrto_EndDate__c || undefined,
+          Hyrto_ServiceLevel__c: lead.Hyrto_ServiceLevel__c || undefined,
+          Hyrto_DeliveryAddress__c: lead.Hyrto_DeliveryAddress__c || undefined,
+          Hyrto_PostalCode__c: lead.Hyrto_PostalCode__c || undefined,
+          Hyrto_CustomerName__c: `${lead.FirstName || ''} ${lead.LastName || ''}`.trim() || undefined,
+          Hyrto_CustomerEmail__c: lead.Email || undefined,
+          Hyrto_CustomerPhone__c: lead.Phone || undefined,
+          Hyrto_Products__c: lead.Hyrto_Products__c || undefined,
+          Hyrto_Addons__c: lead.Hyrto_Addons__c || undefined,
+          Hyrto_LastStep__c: lead.Hyrto_LastStep__c || undefined,
+          Hyrto_LastActivity__c: new Date().toISOString(),
         });
       } catch (e) {
         console.error('Opp update failed:', e.message);
