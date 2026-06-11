@@ -13,18 +13,20 @@ interface Props {
   onNext: () => void;
 }
 
+// Mapping baserat på ProductCode (TOA-PRE/STD/HCP/LYX) för att vara robust
+// mot SF-IDs som varierar mellan orgs.
 const productColors: Record<string, string> = {
-  '01t-001': 'from-emerald-500 to-green-600',
-  '01t-002': 'from-blue-500 to-cyan-600',
-  '01t-003': 'from-purple-500 to-indigo-600',
-  '01t-004': 'from-amber-500 to-orange-600',
+  'TOA-PRE': 'from-emerald-500 to-green-600',
+  'TOA-STD': 'from-blue-500 to-cyan-600',
+  'TOA-HCP': 'from-purple-500 to-indigo-600',
+  'TOA-LYX': 'from-amber-500 to-orange-600',
 };
 
 const productEmojis: Record<string, string> = {
-  '01t-001': '🚽',
-  '01t-002': '🚻',
-  '01t-003': '♿',
-  '01t-004': '👑',
+  'TOA-PRE': '🚽',
+  'TOA-STD': '🚻',
+  'TOA-HCP': '♿',
+  'TOA-LYX': '👑',
 };
 
 function getSelected(productId: string, list: SelectedProduct[]): SelectedProduct | undefined {
@@ -94,8 +96,8 @@ export default function StepProducts({
           const knownAvailable = availRaw !== null;
           const selected = getSelected(product.id, selectedProducts);
           const isChecked = !!selected;
-          const color = productColors[product.id] || 'from-gray-500 to-gray-600';
-          const emoji = productEmojis[product.id] || '🚽';
+          const color = productColors[product.productCode] || 'from-gray-500 to-gray-600';
+          const emoji = productEmojis[product.productCode] || '🚽';
 
           return (
             <div
