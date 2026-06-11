@@ -430,16 +430,10 @@ module.exports = async function handler(req, res) {
 
       // Create Order with Hyrto-fields + OrderItems
       const PB_HYRTO = '01sfj000008eLNhAAM';
-      const PRODUCT_IDS = {
-        '01t-001': '01tfj00000CbRS9AAN', // TOA-PRE
-        '01t-002': '01tfj00000CbRVNAA3', // TOA-STD
-        '01t-003': '01tfj00000CbRWzAAN', // TOA-HCP
-        '01t-004': '01tfj00000CbRYbAAN', // TOA-LYX
-        '01t-010': '01tfj00000CbRaDAAV', // ADD-HANDFAT
-        '01t-011': '01tfj00000CbRbpAAF', // ADD-VARME
-        '01t-012': '01tfj00000CbRdRAAV', // ADD-LJUS
-        '01t-013': '01tfj00000CbRf3AAF', // ADD-STAD
-      };
+      // Frontend skickar redan riktiga SF Product2-IDs (efter mock-removal). Ingen mappning behövs.
+      // Baklänges-kompatibilitet: om någon kund-lead fortfarande har gamla mock-id-formatet,
+      // hoppa över den raden (loggas i itemResults).
+      const looksLikeSfProductId = (id) => typeof id === 'string' && /^01t[a-zA-Z0-9]{12,15}$/.test(id);
 
       const orderPayload = {
         AccountId: accountId,
@@ -469,43 +463,122 @@ module.exports = async function handler(req, res) {
         return { accountId, contactId, oppId, error: 'Order create threw', orderError: e.message };
       }
 
-      // Get PricebookEntries for products
-      const allProds = [...products, ...addons];
-      const productCodeMap = {};
-      for (const p of allProds) {
-        const sfProdId = PRODUCT_IDS[p.productId];
-        if (sfProdId) productCodeMap[p.productId] = sfProdId;
-      }
-      const sfProdIds = Object.values(productCodeMap);
-      if (sfProdIds.length > 0) {
+      // Get PricebookEntries for products + addons (skippa rader som inte ser ut som SF-id).
+      const allProds = [...products, ...addons].filter(p => looksLikeSfProductId(p.productId));
+      const itemResults = [];
+      const bookingResults = [];
+      let firstBookingId = null;
+
+      if (allProds.length > 0) {
+        const sfProdIds = [...new Set(allProds.map(p => p.productId))];
         const pbeQ = await sf.query(`SELECT Id, Product2Id, UnitPrice FROM PricebookEntry WHERE Pricebook2Id = '${PB_HYRTO}' AND Product2Id IN ('${sfProdIds.join("','")}')`);
         const pbeMap = {};
         for (const pbe of (pbeQ.records || [])) pbeMap[pbe.Product2Id] = { id: pbe.Id, price: pbe.UnitPrice };
 
         // Create OrderItems
-        const itemResults = [];
         for (const p of allProds) {
-          const sfProdId = PRODUCT_IDS[p.productId];
-          if (!sfProdId || !pbeMap[sfProdId]) {
-            itemResults.push({ productId: p.productId, skipped: 'no PBE' });
+          if (!pbeMap[p.productId]) {
+            itemResults.push({ productId: p.productId, skipped: 'no PBE in Hyrto pricebook' });
             continue;
           }
           try {
             const oi = await sf.create('OrderItem', {
               OrderId: orderId,
-              PricebookEntryId: pbeMap[sfProdId].id,
+              PricebookEntryId: pbeMap[p.productId].id,
               Quantity: p.quantity || 1,
-              UnitPrice: pbeMap[sfProdId].price,
+              UnitPrice: pbeMap[p.productId].price,
             });
             itemResults.push({ productId: p.productId, ok: oi.success, id: oi.id });
           } catch (e) {
             itemResults.push({ productId: p.productId, error: e.message });
           }
         }
-        return { accountId, contactId, oppId, orderId, itemResults };
+
+        // ── Reservera Asset + skapa Hyrto_Booking__c per fysisk toalett ──
+        // Endast toaletter (Family='Toalett') reserveras som Asset. Tillval/Tjänster hamnar bara på Order.
+        if (lead.Hyrto_Hub__c && lead.Hyrto_StartDate__c && lead.Hyrto_EndDate__c) {
+          try {
+            // Identifiera vilka av allProds som är toaletter
+            const prodInfoQ = await sf.query(`SELECT Id, Family FROM Product2 WHERE Id IN ('${sfProdIds.join("','")}')`);
+            const familyMap = {};
+            for (const r of (prodInfoQ.records || [])) familyMap[r.Id] = r.Family;
+            const toiletLines = allProds.filter(p => familyMap[p.productId] === 'Toalett');
+
+            if (toiletLines.length > 0) {
+              // Hämta lediga Assets för dessa toaletter i hubben
+              const assetQ = await sf.query(`SELECT Id, Product2Id FROM Asset WHERE Hyrto_Hub__c = '${lead.Hyrto_Hub__c}' AND Status = 'Available' AND Product2Id IN ('${[...new Set(toiletLines.map(t => t.productId))].join("','")}')`);
+
+              // Hämta överlappande bokningar för att exkludera redan reserverade Assets
+              const fromIso = `${lead.Hyrto_StartDate__c}T00:00:00Z`;
+              const toIso = `${lead.Hyrto_EndDate__c}T23:59:59Z`;
+              const overlappingBookingsQ = await sf.query(`SELECT Asset__c FROM Hyrto_Booking__c WHERE Asset__c != null AND Status__c IN ('Bokad','Closed Won','Pågående') AND StartDateTime__c <= ${toIso} AND EndDateTime__c >= ${fromIso}`);
+              const reservedAssetIds = new Set((overlappingBookingsQ.records || []).map(b => b.Asset__c));
+
+              // Bygg pool av tillgängliga Assets per produkt
+              const availablePool = {}; // {productId: [assetId, ...]}
+              for (const a of (assetQ.records || [])) {
+                if (reservedAssetIds.has(a.Id)) continue;
+                if (!availablePool[a.Product2Id]) availablePool[a.Product2Id] = [];
+                availablePool[a.Product2Id].push(a.Id);
+              }
+
+              // Skapa Booking per fysisk Asset (quantity = antal bokningar)
+              const startDt = `${lead.Hyrto_StartDate__c}T08:00:00.000Z`;
+              const endDt = `${lead.Hyrto_EndDate__c}T17:00:00.000Z`;
+              for (const line of toiletLines) {
+                const need = line.quantity || 1;
+                const pool = availablePool[line.productId] || [];
+                for (let i = 0; i < need; i++) {
+                  const assetId = pool.shift();
+                  if (!assetId) {
+                    bookingResults.push({ productId: line.productId, skipped: 'no available asset' });
+                    continue;
+                  }
+                  try {
+                    const bk = await sf.create('Hyrto_Booking__c', {
+                      Hub__c: lead.Hyrto_Hub__c,
+                      Asset__c: assetId,
+                      Account__c: accountId,
+                      StartDateTime__c: startDt,
+                      EndDateTime__c: endDt,
+                      Status__c: 'Bokad',
+                      CustomerName__c: `${lead.FirstName || ''} ${lead.LastName || ''}`.trim(),
+                      CustomerEmail__c: lead.Email,
+                      CustomerPhone__c: lead.Phone,
+                      DeliveryAddress__c: lead.Hyrto_DeliveryAddress__c,
+                      CustomerPostalCode__c: lead.Hyrto_PostalCode__c,
+                      ServiceLevel__c: lead.Hyrto_ServiceLevel__c,
+                      TotalPrice__c: totalPrice,
+                    });
+                    if (bk.success) {
+                      bookingResults.push({ productId: line.productId, assetId, bookingId: bk.id });
+                      if (!firstBookingId) firstBookingId = bk.id;
+                    } else {
+                      bookingResults.push({ productId: line.productId, assetId, error: 'booking create failed', details: bk });
+                    }
+                  } catch (e) {
+                    bookingResults.push({ productId: line.productId, assetId, error: e.message });
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Asset reservation / booking failed:', e.message);
+            bookingResults.push({ error: 'booking-phase exception', message: e.message });
+          }
+        }
+
+        // Länka Opportunity → Booking (om vi har en)
+        if (firstBookingId && oppId) {
+          try {
+            await sf.update('Opportunity', oppId, { Hyrto_Booking__c: firstBookingId });
+          } catch (e) {
+            console.warn('Failed to link Opportunity → Booking:', e.message);
+          }
+        }
       }
 
-      return { accountId, contactId, oppId, orderId };
+      return { accountId, contactId, oppId, orderId, itemResults, bookingResults, firstBookingId };
     }
 
     // ── FUNNEL TRACKING ── Upsert Lead by sessionId
