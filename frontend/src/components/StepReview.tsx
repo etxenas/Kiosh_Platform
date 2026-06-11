@@ -1,7 +1,7 @@
 'use client';
 
 import { SelectedProduct, Addon, Hub, Product } from '@/lib/types';
-import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS } from '@/lib/pricing';
+import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS, FULL_PRICE_DAYS, LONG_RENTAL_DAILY_RATE, rentalCostForProduct } from '@/lib/pricing';
 import { SERVICE_LEVELS } from '@/lib/api';
 
 interface Props {
@@ -13,11 +13,15 @@ interface Props {
   serviceLevel: string;
   price: {
     toiletRental: number;
+    toiletRentalFullPrice?: number;
+    toiletRentalLongRental?: number;
     addons: number;
     delivery: number;
     expressFee: number;
     total: number;
     numberOfDays: number;
+    fullPriceDays?: number;
+    longRentalDays?: number;
   };
   isExpress: boolean;
   products: Product[];
@@ -89,17 +93,29 @@ export default function StepReview({
             {selectedProducts.map((sp) => {
               const product = products.find(p => p.id === sp.productId);
               if (!product) return null;
+              const r = rentalCostForProduct(product.pricePerDay, price.numberOfDays, sp.quantity);
               return (
-                <div key={sp.productId} className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700">
-                    {sp.quantity}× {product.name}
-                  </span>
-                  <span className="text-gray-700 font-medium">
-                    {(product.pricePerDay * sp.quantity * price.numberOfDays).toLocaleString('sv-SE')} kr
-                  </span>
+                <div key={sp.productId} className="mb-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">
+                      {sp.quantity}× {product.name}
+                    </span>
+                    <span className="text-gray-700 font-medium">
+                      {r.total.toLocaleString('sv-SE')} kr
+                    </span>
+                  </div>
+                  {r.longDays > 0 && (
+                    <div className="text-xs text-gray-400 ml-3 mt-0.5">
+                      • Dag 1–4: {r.fullDays} dgr × {product.pricePerDay} kr = {r.fullPriceTotal.toLocaleString('sv-SE')} kr<br/>
+                      • Dag 5+: {r.longDays} dgr × {LONG_RENTAL_DAILY_RATE} kr (långhyra-rabatt) = {r.longRentalTotal.toLocaleString('sv-SE')} kr
+                    </div>
+                  )}
                 </div>
               );
             })}
+            {price.numberOfDays > FULL_PRICE_DAYS && (
+              <p className="text-xs text-[#2D9C4A] mt-1 mb-1 font-medium">✨ Långhyra-rabatt: dag 5+ kostar bara {LONG_RENTAL_DAILY_RATE} kr/dag/toa</p>
+            )}
             <p className="text-right text-sm font-bold text-gray-900 mt-1">
               {price.toiletRental.toLocaleString('sv-SE')} kr
             </p>
@@ -114,6 +130,7 @@ export default function StepReview({
                 {addons.map((addon, i) => {
                   const parentProduct = products.find(p => p.id === addon.parentProductId);
                   const parentName = parentProduct?.name || addon.parentProductId;
+                  const r = rentalCostForProduct(addon.pricePerDay, price.numberOfDays, addon.quantity);
                   return (
                     <div key={`${addon.parentProductId}-${addon.productId}-${i}`} className="flex justify-between text-sm mb-1">
                       <span className="text-gray-700">
@@ -121,7 +138,7 @@ export default function StepReview({
                         {addon.quantity > 1 && <span className="text-gray-400"> × {addon.quantity}</span>}
                       </span>
                       <span className="text-gray-700 font-medium">
-                        {(addon.pricePerDay * addon.quantity * price.numberOfDays).toLocaleString('sv-SE')} kr
+                        {r.total.toLocaleString('sv-SE')} kr
                       </span>
                     </div>
                   );
