@@ -641,8 +641,12 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // ── B) Skicka bekräftelse-email via SF emailSimple ──
+      // ── B) Skicka bekräftelse-email ──
+      // Först: försök Resend (om RESEND_API_KEY finns i env)
+      // Fallback: försök SF emailSimple (kräver verified domain)
+      // Sista: spara som Task på Contacten så manuellt utskick kan ske
       let emailSent = false;
+      let emailMethod = 'none';
       if (lead.Email) {
         const startStr = lead.Hyrto_StartDate__c
           ? new Date(lead.Hyrto_StartDate__c).toLocaleDateString('sv-SE')
@@ -654,30 +658,90 @@ module.exports = async function handler(req, res) {
         const productsArr = lead.Hyrto_Products__c ? JSON.parse(lead.Hyrto_Products__c) : [];
         const productsList = productsArr.map(p => `• ${p.quantity}× ${p.productCode || p.productId}`).join('\n');
         const subject = `Tack för din bokning hos Hyrto — ${startStr}`;
-        const body = `Hej ${customerName}!\n\nTack för din bokning! Vi har tagit emot dina uppgifter.\n\nBokningsdetaljer:\n\u2022 Period: ${startStr} — ${endStr}\n\u2022 Leveransadress: ${lead.Hyrto_DeliveryAddress__c || '—'}\n${productsList ? '\nValda toaletter:\n' + productsList + '\n' : ''}\nTotalpris: ${totalPrice} kr\n\nVi hör av oss inom kort med leveransbekräftelse.\n\nMäd vänliga hälsningar,\nHyrto Team`;
-        try {
-          const tok = await sf._getToken();
-          const emailRes = await fetch(`${process.env.SF_INSTANCE_URL}/services/data/v62.0/actions/standard/emailSimple`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
-            body: JSON.stringify({
-              inputs: [{
-                emailAddresses: lead.Email,
-                emailSubject: subject,
-                emailBody: body,
-                senderType: 'CurrentUser',
-              }],
-            }),
-          });
-          const emailResult = await emailRes.json();
-          emailSent = emailRes.ok && Array.isArray(emailResult) && emailResult[0]?.isSuccess;
-          if (!emailSent) console.warn('Email send returned:', JSON.stringify(emailResult).slice(0, 500));
-        } catch (e) {
-          console.warn('Email send threw:', e.message);
+        const bodyText = `Hej ${customerName}!\n\nTack för din bokning! Vi har tagit emot dina uppgifter.\n\nBokningsdetaljer:\n\u2022 Period: ${startStr} — ${endStr}\n\u2022 Leveransadress: ${lead.Hyrto_DeliveryAddress__c || '—'}\n${productsList ? '\nValda toaletter:\n' + productsList + '\n' : ''}\nTotalpris: ${totalPrice} kr\n\nVi hör av oss inom kort med leveransbekräftelse.\n\nMed vänliga hälsningar,\nHyrto Team`;
+        const bodyHtml = `<div style="font-family:sans-serif;max-width:600px"><h2 style="color:#2D9C4A">Tack för din bokning!</h2><p>Hej ${customerName}!</p><p>Vi har tagit emot dina uppgifter och kommer att höra av oss inom kort med leveransbekräftelse.</p><h3>Bokningsdetaljer</h3><ul><li><strong>Period:</strong> ${startStr} — ${endStr}</li><li><strong>Leveransadress:</strong> ${lead.Hyrto_DeliveryAddress__c || '—'}</li></ul>${productsList ? '<h3>Valda toaletter</h3><pre style="background:#f5f5f5;padding:10px;border-radius:6px">' + productsList + '</pre>' : ''}<p style="font-size:18px;color:#FF6B35"><strong>Totalpris: ${totalPrice} kr</strong></p><p style="color:#999">Med vänliga hälsningar,<br/>Hyrto Team</p></div>`;
+
+        // Försök 1: Resend
+        if (process.env.RESEND_API_KEY) {
+          try {
+            const resendRes = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from: process.env.RESEND_FROM || 'Hyrto <onboarding@resend.dev>',
+                to: [lead.Email],
+                subject,
+                text: bodyText,
+                html: bodyHtml,
+              }),
+            });
+            const resendResult = await resendRes.json();
+            if (resendRes.ok && resendResult.id) {
+              emailSent = true;
+              emailMethod = 'resend';
+              console.log('Email sent via Resend:', resendResult.id);
+            } else {
+              console.warn('Resend send failed:', JSON.stringify(resendResult).slice(0, 300));
+            }
+          } catch (e) {
+            console.warn('Resend send threw:', e.message);
+          }
+        }
+
+        // Försök 2: SF emailSimple (kräver verified domain)
+        if (!emailSent) {
+          try {
+            const tok = await sf._getToken();
+            const emailRes = await fetch(`${process.env.SF_INSTANCE_URL}/services/data/v62.0/actions/standard/emailSimple`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+              body: JSON.stringify({
+                inputs: [{
+                  emailAddresses: lead.Email,
+                  emailSubject: subject,
+                  emailBody: bodyText,
+                  senderType: 'CurrentUser',
+                }],
+              }),
+            });
+            const emailResult = await emailRes.json();
+            emailSent = emailRes.ok && Array.isArray(emailResult) && emailResult[0]?.isSuccess;
+            if (emailSent) {
+              emailMethod = 'salesforce';
+            } else {
+              console.warn('SF emailSimple failed:', JSON.stringify(emailResult).slice(0, 300));
+            }
+          } catch (e) {
+            console.warn('SF emailSimple threw:', e.message);
+          }
+        }
+
+        // Fallback: skapa Task på Contact så manuellt utskick kan ske
+        if (!emailSent && contactId) {
+          try {
+            const t = await sf.create('Task', {
+              Subject: `📧 Skicka bekräftelse-email: ${subject}`,
+              WhoId: contactId,
+              WhatId: oppId || undefined,
+              Status: 'Open',
+              Priority: 'Normal',
+              Description: `Till: ${lead.Email}\n\nInnehåll:\n${bodyText}`,
+              ActivityDate: new Date().toISOString().slice(0, 10),
+            });
+            if (t.success) {
+              emailMethod = 'task-fallback';
+              console.log('Created email-task for manual send:', t.id);
+            }
+          } catch (e) {
+            console.warn('Task fallback failed:', e.message);
+          }
         }
       }
 
-      return { accountId, contactId, oppId, contractId, contractActivated, orderId, itemResults, bookingResults, firstBookingId, emailSent };
+      return { accountId, contactId, oppId, contractId, contractActivated, orderId, itemResults, bookingResults, firstBookingId, emailSent, emailMethod };
     }
 
     // ── FUNNEL TRACKING ── Upsert Lead by sessionId
