@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { products, getAvailableCount, calculatePrice, findBestHub } from '@/lib/mock-data';
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  'https://salesforce-backend-zeta.vercel.app';
 
 // GET /api/availability?productId=...&startDate=...&endDate=...&postalCode=...&hubId=...
+// Proxar till backendens /api/catalog/availability och beräknar för en specifik produkt.
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const productId = searchParams.get('productId');
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
-  const postalCode = searchParams.get('postalCode');
   const hubId = searchParams.get('hubId');
 
   if (!productId || !startDate || !endDate) {
@@ -18,38 +21,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const availableCount = getAvailableCount(productId, hubId || undefined);
-    const product = products.find((p) => p.id === productId);
-
-    if (!product) {
-      return NextResponse.json({ error: 'Produkt hittades inte' }, { status: 404 });
+    const params = new URLSearchParams({ fromDate: startDate, toDate: endDate });
+    if (hubId) params.set('hubId', hubId);
+    const res = await fetch(`${BACKEND_URL}/api/catalog/availability?${params}`);
+    if (!res.ok) {
+      return NextResponse.json({ error: `Backend ${res.status}` }, { status: 502 });
     }
-
-    if (availableCount === 0) {
-      return NextResponse.json({
-        available: false,
-        availableCount: 0,
-        pricePerDay: product.pricePerDay,
-        estimatedTotal: 0,
-        numberOfDays: 0,
-      });
+    const data = await res.json();
+    // Räkna tillgänglighet för (hubId, productId) — eller summera över alla hubs om hubId saknas
+    let availableCount = 0;
+    if (hubId) {
+      availableCount = data.availability?.[hubId]?.[productId] ?? 0;
+    } else {
+      for (const h of Object.values(data.availability || {})) {
+        const hub = h as Record<string, number>;
+        availableCount += hub[productId] ?? 0;
+      }
     }
-
-    // Beräkna frakt baserat på hub
-    let deliveryFee = 800; // default
-    if (postalCode && hubId) {
-      const bestHub = findBestHub(postalCode, [{ productId, quantity: 1 }]);
-      if (bestHub) deliveryFee = bestHub.deliveryFee;
-    }
-
-    const price = calculatePrice([{ productId, quantity: 1 }], startDate, endDate, [], deliveryFee);
-
     return NextResponse.json({
-      available: true,
+      available: availableCount > 0,
       availableCount,
-      pricePerDay: product.pricePerDay,
-      estimatedTotal: price.total,
-      numberOfDays: price.numberOfDays,
     });
   } catch (error) {
     console.error('Availability error:', error);

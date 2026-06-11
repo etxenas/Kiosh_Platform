@@ -1,12 +1,13 @@
 'use client';
 
 import { Product, SelectedProduct, Hub } from '@/lib/types';
-import { getAvailableCount } from '@/lib/mock-data';
+import { AvailabilityResult, getAvailableCountFor } from '@/lib/catalog';
 
 interface Props {
   products: Product[];
   selectedProducts: SelectedProduct[];
   selectedHub: Hub | null;
+  availability: AvailabilityResult | null;
   onUpdate: (selected: SelectedProduct[]) => void;
   onBack: () => void;
   onNext: () => void;
@@ -34,6 +35,7 @@ export default function StepProducts({
   products,
   selectedProducts,
   selectedHub,
+  availability,
   onUpdate,
   onBack,
   onNext,
@@ -47,11 +49,19 @@ export default function StepProducts({
     }
   };
 
+  // Lokal helper: vad är maxQty för en produkt? (selectedHub + availability från SF)
+  const maxQtyFor = (productId: string): number => {
+    if (!selectedHub) return 999; // ingen hub vald → belägg ingen begränsning
+    const c = getAvailableCountFor(availability, selectedHub.id, productId);
+    if (c === null) return 999; // tillgänglighet inte hämtad än
+    return c;
+  };
+
   const changeQuantity = (productId: string, delta: number) => {
     onUpdate(
       selectedProducts.map((p) =>
         p.productId === productId
-          ? { ...p, quantity: Math.max(1, Math.min(p.quantity + delta, getAvailableCount(productId))) }
+          ? { ...p, quantity: Math.max(1, Math.min(p.quantity + delta, maxQtyFor(productId))) }
           : p
       )
     );
@@ -78,7 +88,10 @@ export default function StepProducts({
 
       <div className="space-y-3 mb-6 stagger">
         {products.map((product) => {
-          const available = getAvailableCount(product.id, selectedHub?.id);
+          const availRaw = selectedHub ? getAvailableCountFor(availability, selectedHub.id, product.id) : null;
+          // null = ej hämtat (visa som tillgänglig); siffra = riktig tillgänglighet
+          const available = availRaw === null ? 99 : availRaw;
+          const knownAvailable = availRaw !== null;
           const selected = getSelected(product.id, selectedProducts);
           const isChecked = !!selected;
           const color = productColors[product.id] || 'from-gray-500 to-gray-600';
@@ -124,7 +137,7 @@ export default function StepProducts({
                         <p className="text-gray-500 text-sm mt-0.5">{product.description}</p>
                         {available > 0 ? (
                           <span className="inline-flex items-center text-xs font-medium text-green-700 bg-green-100 rounded-full px-2.5 py-0.5 mt-1.5">
-                            {available} st tillgängliga
+                            {knownAvailable ? `${available} st tillgängliga` : 'Tillgänglig'}
                           </span>
                         ) : (
                           <span className="inline-flex items-center text-xs font-medium text-red-600 bg-red-100 rounded-full px-2.5 py-0.5 mt-1.5">

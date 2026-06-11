@@ -1,10 +1,10 @@
 'use client';
 
 import { Product, SelectedProduct, Addon } from '@/lib/types';
-import { getProduct } from '@/lib/mock-data';
 
 interface Props {
   addonProducts: Product[];
+  toiletProducts: Product[];
   selectedToilets: SelectedProduct[];
   selectedAddons: Addon[];
   onUpdate: (addons: Addon[]) => void;
@@ -14,6 +14,7 @@ interface Props {
 
 export default function StepAddons({
   addonProducts,
+  toiletProducts,
   selectedToilets,
   selectedAddons,
   onUpdate,
@@ -71,8 +72,7 @@ export default function StepAddons({
 
       {/* Tillval per modell */}
       {selectedToilets.map((st) => {
-        const toiletProduct = getProduct(st.productId);
-        const toiletName = toiletProduct?.name || st.productId;
+        const toiletName = toiletProducts.find(p => p.id === st.productId)?.name || st.productId;
         return (
           <div key={st.productId} className="mb-6">
             <h3 className="font-bold text-gray-800 mb-3 bg-gray-100 rounded-xl px-4 py-2 text-sm">

@@ -1,6 +1,6 @@
 'use client';
 
-import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS } from '@/lib/mock-data';
+import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS } from '@/lib/pricing';
 
 interface Props {
   startDate: string | null;

@@ -1,7 +1,7 @@
 'use client';
 
 import { BookingResponse, Hub } from '@/lib/types';
-import { EXPRESS_CUTOFF_DAYS } from '@/lib/mock-data';
+import { EXPRESS_CUTOFF_DAYS } from '@/lib/pricing';
 
 interface Props {
   bookingResponse: BookingResponse;

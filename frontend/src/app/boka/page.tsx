@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { BookingState, BookingStep, Addon, SelectedProduct, Hub, ServiceLevelType } from '@/lib/types';
-import { products, addonProducts, calculatePrice, isExpressOrder } from '@/lib/mock-data';
+import { useState, useCallback, useEffect } from 'react';
+import { BookingState, BookingStep, Addon, SelectedProduct, Hub, ServiceLevelType, Product } from '@/lib/types';
+import { fetchHubs, fetchProducts, fetchAddons, fetchAvailability, AvailabilityResult } from '@/lib/catalog';
+import { calculatePrice, isExpressOrder } from '@/lib/pricing';
 import StepPostalCode from '@/components/StepPostalCode';
 import StepDates from '@/components/StepDates';
 import StepProducts from '@/components/StepProducts';
@@ -13,7 +14,6 @@ import StepCustomer from '@/components/StepCustomer';
 import StepConfirmation from '@/components/StepConfirmation';
 import ProgressBar from '@/components/ProgressBar';
 import { trackFunnel, resetSession } from '@/lib/funnel';
-import { useEffect } from 'react';
 
 const initialBookingState: BookingState = {
   step: 'postalCode',
@@ -66,12 +66,51 @@ export default function BokaPage() {
   const [booking, setBooking] = useState<BookingState>(initialBookingState);
   const [submitting, setSubmitting] = useState(false);
 
-  // Reset funnel session if user lands on confirmation (new visit later)
+  // SF-katalog: hubs, toaletter, tillval
+  const [hubs, setHubs] = useState<Hub[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [addonProducts, setAddonProducts] = useState<Product[]>([]);
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  // Tillgänglighet (ändras när datum väljs)
+  const [availability, setAvailability] = useState<AvailabilityResult | null>(null);
+
+  // Ladda katalog vid mount
   useEffect(() => {
-    if (booking.step === 'confirmation') {
-      // Keep session for confirmation page; reset when user starts new booking
-    }
-  }, [booking.step]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const [h, p, a] = await Promise.all([fetchHubs(), fetchProducts(), fetchAddons()]);
+        if (cancelled) return;
+        setHubs(h);
+        setProducts(p);
+        setAddonProducts(a);
+        setCatalogReady(true);
+      } catch (e) {
+        if (!cancelled) {
+          setCatalogError(e instanceof Error ? e.message : 'Kunde inte ladda katalog');
+          setCatalogReady(true);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Ladda tillgänglighet när datum väljs
+  useEffect(() => {
+    if (!booking.startDate || !booking.endDate) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await fetchAvailability(booking.startDate!, booking.endDate!);
+        if (!cancelled) setAvailability(result);
+      } catch {
+        // tyst fel — fronten visar 0 om result är null/0
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [booking.startDate, booking.endDate]);
 
   const currentStepIndex = stepOrder.indexOf(booking.step);
 
@@ -137,9 +176,34 @@ export default function BokaPage() {
         booking.startDate,
         booking.endDate,
         booking.addons.map((a) => ({ productId: a.productId, quantity: a.quantity, pricePerDay: a.pricePerDay })),
-        deliveryFee
+        deliveryFee,
+        products,
       )
     : null;
+
+  // Laddningsskydd: visa enkel laddare medan katalogen hämtas
+  if (!catalogReady) {
+    return (
+      <div className="min-h-screen bg-[#FFFDF7] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-10 h-10 border-3 border-[#2D9C4A] border-t-transparent rounded-full mx-auto mb-3" />
+          <p className="text-gray-500">Laddar katalog…</p>
+        </div>
+      </div>
+    );
+  }
+  if (catalogError) {
+    return (
+      <div className="min-h-screen bg-[#FFFDF7] flex items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <p className="text-4xl mb-3">⚠️</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Kunde inte ladda katalogen</h2>
+          <p className="text-gray-500 text-sm mb-4">{catalogError}</p>
+          <button onClick={() => location.reload()} className="bg-[#2D9C4A] text-white px-6 py-3 rounded-xl font-semibold">Försök igen</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FFFDF7]">
@@ -172,6 +236,7 @@ export default function BokaPage() {
               deliveryAddress={booking.deliveryAddress}
               selectedHub={booking.selectedHub}
               selectedProducts={booking.selectedProducts}
+              hubs={hubs}
               onUpdate={(updates) => updateBooking(updates)}
               onNext={() => goToStep('dates')}
             />
@@ -200,6 +265,7 @@ export default function BokaPage() {
               products={products}
               selectedProducts={booking.selectedProducts}
               selectedHub={booking.selectedHub}
+              availability={availability}
               onUpdate={(selectedProducts: SelectedProduct[]) => updateBooking({ selectedProducts })}
               onBack={() => goToStep('dates')}
               onNext={() => {
@@ -212,6 +278,7 @@ export default function BokaPage() {
           {booking.step === 'addons' && (
             <StepAddons
               addonProducts={addonProducts}
+              toiletProducts={products}
               selectedToilets={booking.selectedProducts}
               selectedAddons={booking.addons}
               onUpdate={(addons: Addon[]) => updateBooking({ addons })}
@@ -249,6 +316,7 @@ export default function BokaPage() {
               serviceLevel={booking.serviceLevel}
               price={price}
               isExpress={isExpress}
+              products={products}
               onBack={() => goToStep('serviceLevel')}
               onNext={() => {
                 trackFunnel('review', { totalPrice: price.total });

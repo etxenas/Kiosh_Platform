@@ -1,7 +1,7 @@
 'use client';
 
-import { SelectedProduct, Addon, Hub } from '@/lib/types';
-import { getProduct, isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS } from '@/lib/mock-data';
+import { SelectedProduct, Addon, Hub, Product } from '@/lib/types';
+import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS } from '@/lib/pricing';
 import { SERVICE_LEVELS } from '@/lib/api';
 
 interface Props {
@@ -20,6 +20,7 @@ interface Props {
     numberOfDays: number;
   };
   isExpress: boolean;
+  products: Product[];
   onBack: () => void;
   onNext: () => void;
 }
@@ -33,6 +34,7 @@ export default function StepReview({
   serviceLevel,
   price,
   isExpress,
+  products,
   onBack,
   onNext,
 }: Props) {
@@ -85,7 +87,7 @@ export default function StepReview({
           <div>
             <p className="text-sm text-gray-500 mb-2">Toaletter</p>
             {selectedProducts.map((sp) => {
-              const product = getProduct(sp.productId);
+              const product = products.find(p => p.id === sp.productId);
               if (!product) return null;
               return (
                 <div key={sp.productId} className="flex justify-between text-sm mb-1">
@@ -110,7 +112,7 @@ export default function StepReview({
               <div>
                 <p className="text-sm text-gray-500 mb-2">Tillval</p>
                 {addons.map((addon, i) => {
-                  const parentProduct = getProduct(addon.parentProductId);
+                  const parentProduct = products.find(p => p.id === addon.parentProductId);
                   const parentName = parentProduct?.name || addon.parentProductId;
                   return (
                     <div key={`${addon.parentProductId}-${addon.productId}-${i}`} className="flex justify-between text-sm mb-1">

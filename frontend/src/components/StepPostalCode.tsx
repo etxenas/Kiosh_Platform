@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Hub, SelectedProduct, DeliveryAddress } from '@/lib/types';
-import { findHubsForPostalCode, findBestHub } from '@/lib/mock-data';
+import { reachableHubsFor } from '@/lib/catalog';
 import { trackFunnel } from '@/lib/funnel';
 import { lookupCityFromPostalCode } from '@/lib/postalLookup';
 
@@ -34,6 +34,7 @@ interface Props {
   deliveryAddress: DeliveryAddress;
   selectedHub: Hub | null;
   selectedProducts: SelectedProduct[];
+  hubs: Hub[];
   onUpdate: (updates: {
     postalCode: string;
     customerName: string;
@@ -54,7 +55,8 @@ export default function StepPostalCode({
   customerEmail: initialEmail,
   deliveryAddress: initialAddress,
   selectedHub: initialHub,
-  selectedProducts,
+  selectedProducts: _selectedProducts,
+  hubs: catalogHubs,
   onUpdate,
   onNext,
 }: Props) {
@@ -141,19 +143,14 @@ export default function StepPostalCode({
 
     setChecking(true);
     setTimeout(() => {
-      const reachableHubs = findHubsForPostalCode(clean);
+      const reachableHubs = reachableHubsFor(clean, catalogHubs);
       setHubs(reachableHubs);
 
-      // Behåll befintligt val om det fortfarande är i listan, annars välj bästa
+      // Behåll befintligt val om det fortfarande är i listan, annars välj bästa (närmast)
       const stillValid = chosenHub && reachableHubs.find((h) => h.id === chosenHub.id);
-      let pickedHub: Hub | null = null;
-      if (stillValid) {
-        // Refresh distanceKm/deliveryFee från ny lookup
-        pickedHub = reachableHubs.find((h) => h.id === stillValid.id) || stillValid;
-      } else {
-        const best = selectedProducts.length > 0 ? findBestHub(clean, selectedProducts) : null;
-        pickedHub = best?.hub || reachableHubs[0] || null;
-      }
+      const pickedHub: Hub | null = stillValid
+        ? reachableHubs.find((h) => h.id === stillValid.id) || stillValid
+        : reachableHubs[0] || null;
       setChosenHub(pickedHub);
       setChecking(false);
     }, 400);
