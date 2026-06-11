@@ -441,13 +441,36 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // Create Order with Hyrto-fields + OrderItems
+      // Create Contract → Order → Booking-chain.
+      // Contract är juridisk hyrtidsperiod; Order håller produkter+pris; Booking håller fysisk Asset-reservation.
       const PB_HYRTO = '01sfj000008eLNhAAM';
       // Frontend skickar redan riktiga SF Product2-IDs (efter mock-removal). Ingen mappning behövs.
       // Baklänges-kompatibilitet: om någon kund-lead fortfarande har gamla mock-id-formatet,
       // hoppa över den raden (loggas i itemResults).
       const looksLikeSfProductId = (id) => typeof id === 'string' && /^01t[a-zA-Z0-9]{12,15}$/.test(id);
 
+      // ── 1) Contract ── (kräver AccountId + ContractTerm i månader, StartDate)
+      let contractId = null;
+      if (lead.Hyrto_StartDate__c && lead.Hyrto_EndDate__c) {
+        // Räkna månader (avrundat uppåt, minst 1) som ContractTerm
+        const start = new Date(lead.Hyrto_StartDate__c);
+        const end = new Date(lead.Hyrto_EndDate__c);
+        const months = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+        try {
+          const contract = await sf.create('Contract', {
+            AccountId: accountId,
+            Status: 'Draft',
+            StartDate: lead.Hyrto_StartDate__c,
+            ContractTerm: months,
+          });
+          if (contract.success) contractId = contract.id;
+          else console.warn('Contract create failed:', JSON.stringify(contract));
+        } catch (e) {
+          console.warn('Contract create exception (non-fatal):', e.message);
+        }
+      }
+
+      // ── 2) Order ──
       const orderPayload = {
         AccountId: accountId,
         Status: 'Draft',
@@ -463,17 +486,18 @@ module.exports = async function handler(req, res) {
         Hyrto_SessionId__c: lead.Hyrto_SessionId__c,
         Hyrto_CustomerPostalCode__c: lead.Hyrto_PostalCode__c,
       };
+      if (contractId) orderPayload.ContractId = contractId;
       let orderId = null;
       try {
         const order = await sf.create('Order', orderPayload);
         if (!order.success) {
           console.error('Order create failed:', JSON.stringify(order));
-          return { accountId, contactId, oppId, error: 'Order create failed', orderError: order };
+          return { accountId, contactId, oppId, contractId, error: 'Order create failed', orderError: order };
         }
         orderId = order.id;
       } catch (e) {
         console.error('Order create exception:', e.message);
-        return { accountId, contactId, oppId, error: 'Order create threw', orderError: e.message };
+        return { accountId, contactId, oppId, contractId, error: 'Order create threw', orderError: e.message };
       }
 
       // Get PricebookEntries for products + addons (skippa rader som inte ser ut som SF-id).
@@ -581,17 +605,27 @@ module.exports = async function handler(req, res) {
           }
         }
 
-        // Länka Opportunity → Booking (om vi har en)
-        if (firstBookingId && oppId) {
-          try {
-            await sf.update('Opportunity', oppId, { Hyrto_Booking__c: firstBookingId });
-          } catch (e) {
-            console.warn('Failed to link Opportunity → Booking:', e.message);
+        // Länka Opportunity + Order → Booking (om vi har en)
+        if (firstBookingId) {
+          if (oppId) {
+            try {
+              await sf.update('Opportunity', oppId, { Hyrto_Booking__c: firstBookingId });
+            } catch (e) {
+              console.warn('Failed to link Opportunity → Booking:', e.message);
+            }
+          }
+          if (orderId) {
+            try {
+              await sf.update('Order', orderId, { Hyrto_Booking__c: firstBookingId });
+            } catch (e) {
+              // Icke-fatal — från start finns inte Order.Hyrto_Booking__c-fältet. Subagenten deployar det.
+              console.warn('Failed to link Order → Booking (field may not exist yet):', e.message);
+            }
           }
         }
       }
 
-      return { accountId, contactId, oppId, orderId, itemResults, bookingResults, firstBookingId };
+      return { accountId, contactId, oppId, contractId, orderId, itemResults, bookingResults, firstBookingId };
     }
 
     // ── FUNNEL TRACKING ── Upsert Lead by sessionId
