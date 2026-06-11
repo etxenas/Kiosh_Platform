@@ -171,7 +171,9 @@ module.exports = async function handler(req, res) {
       const totalPrice = lead.Hyrto_TotalPrice__c || totalPriceFromTracking || 0;
 
       // Build LeadConvert payload
-      const closeDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      // CloseDate är dagens datum eftersom Opportunity stags som "Closed Won" direkt vid konvertering (webbokning = stickad order).
+      // Lokal tid i Europe/Stockholm så vi inte hamnar på gårdagen vid UTC-konvertering nattetid.
+      const closeDate = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' });
       const oppName = `${lead.Hyrto_PostalCode__c || '?'} — ${lead.Email || lead.Company || 'webbokning'}`;
 
       // Try to find existing account first (dedupe)
