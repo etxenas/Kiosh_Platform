@@ -4,6 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { CustomerInfo, DeliveryAddress } from '@/lib/types';
+import { lookupCityFromPostalCode } from '@/lib/postalLookup';
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve) => {
@@ -82,6 +83,8 @@ export default function StepCustomer({
   const [billingCompanyName, setBillingCompanyName] = useState(initialCompanyName);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [placesReady, setPlacesReady] = useState(false);
+  const [billingCityLookup, setBillingCityLookup] = useState(false);
+  const [billingCityAutoFilled, setBillingCityAutoFilled] = useState(false);
 
   const autocompleteRef = useRef<HTMLInputElement>(null);
   const placesAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
@@ -117,6 +120,29 @@ export default function StepCustomer({
       if (ct) setBillingCity(ct);
     });
   }, [placesReady, hasDifferent]);
+
+  // Autofyll fakturapostort från postnummer
+  const tryLookupBillingCity = async (pc: string) => {
+    const clean = pc.replace(/\s/g, '');
+    if (clean.length !== 5 || !/^\d{5}$/.test(clean)) return;
+    if (billingCity.trim() && !billingCityAutoFilled) return;
+    setBillingCityLookup(true);
+    const found = await lookupCityFromPostalCode(clean);
+    setBillingCityLookup(false);
+    if (found) {
+      setBillingCity(found);
+      setBillingCityAutoFilled(true);
+    }
+  };
+
+  const handleBillingPcChange = (v: string) => {
+    setBillingPostalCode(v);
+    if (billingCityAutoFilled && v.replace(/\s/g, '').length < 5) {
+      setBillingCity('');
+      setBillingCityAutoFilled(false);
+    }
+    if (v.replace(/\s/g, '').length >= 5) tryLookupBillingCity(v);
+  };
 
   // När man bockar i "annan fakturaadress" — prefill med leveransadress
   useEffect(() => {
@@ -296,20 +322,28 @@ export default function StepCustomer({
                   <input
                     type="text"
                     value={billingPostalCode}
-                    onChange={(e) => setBillingPostalCode(e.target.value)}
+                    onChange={(e) => handleBillingPcChange(e.target.value)}
                     className={inputClass('billingPostalCode')}
                     placeholder="123 45"
+                    inputMode="numeric"
+                    maxLength={6}
                   />
                   {errors.billingPostalCode && <p className="text-red-500 text-xs mt-1">{errors.billingPostalCode}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Postort *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Postort *
+                    {billingCityLookup && <span className="text-[10px] text-gray-400 font-normal ml-1">söker…</span>}
+                    {!billingCityLookup && billingCityAutoFilled && (
+                      <span className="text-[10px] text-[#2D9C4A] font-normal ml-1">✓ autofyllt</span>
+                    )}
+                  </label>
                   <input
                     type="text"
                     value={billingCity}
-                    onChange={(e) => setBillingCity(e.target.value)}
+                    onChange={(e) => { setBillingCity(e.target.value); setBillingCityAutoFilled(false); }}
                     className={inputClass('billingCity')}
-                    placeholder="Stockholm"
+                    placeholder={billingCityLookup ? 'Söker…' : 'Stockholm'}
                   />
                   {errors.billingCity && <p className="text-red-500 text-xs mt-1">{errors.billingCity}</p>}
                 </div>

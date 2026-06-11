@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Hub, SelectedProduct, DeliveryAddress } from '@/lib/types';
 import { findHubsForPostalCode, findBestHub } from '@/lib/mock-data';
 import { trackFunnel } from '@/lib/funnel';
+import { lookupCityFromPostalCode } from '@/lib/postalLookup';
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve) => {
@@ -66,6 +67,8 @@ export default function StepPostalCode({
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [chosenHub, setChosenHub] = useState<Hub | null>(initialHub);
   const [placesReady, setPlacesReady] = useState(false);
+  const [cityLookup, setCityLookup] = useState(false);
+  const [cityAutoFilled, setCityAutoFilled] = useState(false);
 
   const autocompleteRef = useRef<HTMLInputElement>(null);
   const placesAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
@@ -114,9 +117,27 @@ export default function StepPostalCode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Slå upp postort när postnumret är 5 siffror — men inte om användaren redan skrivit en stad manuellt
+  const tryLookupCity = async (pc: string) => {
+    const clean = pc.replace(/\s/g, '');
+    if (clean.length !== 5 || !/^\d{5}$/.test(clean)) return;
+    // Skriv inte över om användaren själv fyllt i något som inte är autofyllt
+    if (city.trim() && !cityAutoFilled) return;
+    setCityLookup(true);
+    const found = await lookupCityFromPostalCode(clean);
+    setCityLookup(false);
+    if (found) {
+      setCity(found);
+      setCityAutoFilled(true);
+    }
+  };
+
   const doCheck = (pc: string) => {
     const clean = pc.replace(/\s/g, '');
     if (clean.length < 5) return;
+
+    // Autofyll postort parallellt med hub-koll
+    tryLookupCity(clean);
 
     setChecking(true);
     setTimeout(() => {
@@ -149,6 +170,11 @@ export default function StepPostalCode({
 
   const handlePcChange = (v: string) => {
     setPostalCode(v);
+    // Om PC ändras — släpp "autofyllt"-flaggan om det inte längre matchar
+    if (cityAutoFilled && v.replace(/\s/g, '').length < 5) {
+      setCity('');
+      setCityAutoFilled(false);
+    }
     if (v.replace(/\s/g, '').length >= 5) doCheck(v);
   };
 
@@ -266,12 +292,18 @@ export default function StepPostalCode({
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Postort</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Postort
+                {cityLookup && <span className="text-xs text-gray-400 font-normal ml-2">söker…</span>}
+                {!cityLookup && cityAutoFilled && (
+                  <span className="text-xs text-[#2D9C4A] font-normal ml-2">✓ autofyllt</span>
+                )}
+              </label>
               <input
                 type="text"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="Stockholm"
+                onChange={(e) => { setCity(e.target.value); setCityAutoFilled(false); }}
+                placeholder={cityLookup ? 'Söker…' : 'Stockholm'}
                 className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 focus:ring-2 focus:ring-[#2D9C4A] focus:border-[#2D9C4A] outline-none transition-colors"
                 autoComplete="address-level2"
               />
