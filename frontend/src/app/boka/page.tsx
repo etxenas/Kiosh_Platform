@@ -230,6 +230,7 @@ export default function BokaPage() {
         booking.addons.map((a) => ({ productId: a.productId, quantity: a.quantity, pricePerDay: a.pricePerDay })),
         deliveryFee,
         products,
+        addonProducts,
       )
     : null;
 

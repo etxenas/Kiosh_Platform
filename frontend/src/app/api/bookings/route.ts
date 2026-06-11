@@ -33,6 +33,8 @@ interface CatalogProductDto {
   family: string;
   description: string | null;
   pricePerDay: number;
+  longRentalDailyRate?: number | null;
+  fullPriceDays?: number | null;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -66,9 +68,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const [hubsData, productsData] = await Promise.all([
+    const [hubsData, productsData, addonsData] = await Promise.all([
       fetchJson<{ records: SfHub[] }>(`${API_BASE}/api/hubs`),
       fetchJson<{ products: CatalogProductDto[] }>(`${API_BASE}/api/catalog/products`),
+      fetchJson<{ addons: CatalogProductDto[] }>(`${API_BASE}/api/catalog/addons`),
     ]);
 
     const hub = (hubsData.records || []).find((h) => h.Id === hubId);
@@ -79,6 +82,18 @@ export async function POST(request: NextRequest) {
       family: 'Toalett' as const,
       description: p.description || '',
       pricePerDay: p.pricePerDay,
+      longRentalDailyRate: p.longRentalDailyRate ?? null,
+      fullPriceDays: p.fullPriceDays ?? null,
+    }));
+    const addonCatalog: Product[] = (addonsData.addons || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      productCode: p.productCode,
+      family: 'Tillval' as const,
+      description: p.description || '',
+      pricePerDay: p.pricePerDay,
+      longRentalDailyRate: p.longRentalDailyRate ?? null,
+      fullPriceDays: p.fullPriceDays ?? null,
     }));
 
     // deliveryFee från frontend (klienten har redan räknat distance) — fallback till hub-base
@@ -99,6 +114,7 @@ export async function POST(request: NextRequest) {
       })) || [],
       deliveryFee,
       toilets,
+      addonCatalog,
     );
 
     // Service-multiplier

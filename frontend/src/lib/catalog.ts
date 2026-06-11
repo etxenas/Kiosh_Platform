@@ -77,6 +77,8 @@ interface CatalogProduct {
   family: string;
   description: string | null;
   pricePerDay: number;
+  longRentalDailyRate?: number | null;
+  fullPriceDays?: number | null;
 }
 
 function mapCatalogProduct(p: CatalogProduct): Product {
@@ -87,6 +89,8 @@ function mapCatalogProduct(p: CatalogProduct): Product {
     family: (p.family || 'Toalett') as Product['family'],
     description: p.description || '',
     pricePerDay: p.pricePerDay,
+    longRentalDailyRate: p.longRentalDailyRate ?? null,
+    fullPriceDays: p.fullPriceDays ?? null,
   };
 }
 

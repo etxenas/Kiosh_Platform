@@ -98,18 +98,41 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    // ── Katalog: produkter (toaletter) med pris ──
+    // ── Helper: query katalog med fallback om långhyra-fältena inte deployats än ──
+    async function queryCatalogFamily(family) {
+      const baseFields = 'Id, Product2.Id, Product2.Name, Product2.ProductCode, Product2.Family, Product2.Description, UnitPrice';
+      const longRentalFields = 'Product2.Hyrto_LongRentalDailyRate__c, Product2.Hyrto_FullPriceDays__c';
+      let r;
+      let hasLongRental = true;
+      try {
+        r = await sf.query(`
+          SELECT ${baseFields}, ${longRentalFields}
+          FROM PricebookEntry
+          WHERE Pricebook2.IsStandard = true
+            AND IsActive = true
+            AND Product2.IsActive = true
+            AND Product2.Family = '${family}'
+          ORDER BY UnitPrice
+        `);
+      } catch {
+        hasLongRental = false;
+        r = await sf.query(`
+          SELECT ${baseFields}
+          FROM PricebookEntry
+          WHERE Pricebook2.IsStandard = true
+            AND IsActive = true
+            AND Product2.IsActive = true
+            AND Product2.Family = '${family}'
+          ORDER BY UnitPrice
+        `);
+      }
+      return { records: r.records || [], hasLongRental };
+    }
+
+    // ── Katalog: produkter (toaletter) med pris + långhyra-rabatt ──
     if (path === '/api/catalog/products' && req.method === 'GET') {
-      const r = await sf.query(`
-        SELECT Id, Product2.Id, Product2.Name, Product2.ProductCode, Product2.Family, Product2.Description, UnitPrice
-        FROM PricebookEntry
-        WHERE Pricebook2.IsStandard = true
-          AND IsActive = true
-          AND Product2.IsActive = true
-          AND Product2.Family = 'Toalett'
-        ORDER BY UnitPrice
-      `);
-      const products = (r.records || []).map(pbe => ({
+      const { records } = await queryCatalogFamily('Toalett');
+      const products = records.map(pbe => ({
         id: pbe.Product2.Id,
         pricebookEntryId: pbe.Id,
         name: pbe.Product2.Name,
@@ -117,23 +140,17 @@ module.exports = async function handler(req, res) {
         family: pbe.Product2.Family,
         description: pbe.Product2.Description,
         pricePerDay: pbe.UnitPrice,
+        longRentalDailyRate: pbe.Product2.Hyrto_LongRentalDailyRate__c ?? null,
+        fullPriceDays: pbe.Product2.Hyrto_FullPriceDays__c ?? null,
       }));
       sendJSON(res, 200, { products, totalSize: products.length });
       return;
     }
 
-    // ── Katalog: addons (tillval) med pris ──
+    // ── Katalog: addons (tillval) med pris + långhyra-rabatt ──
     if (path === '/api/catalog/addons' && req.method === 'GET') {
-      const r = await sf.query(`
-        SELECT Id, Product2.Id, Product2.Name, Product2.ProductCode, Product2.Family, Product2.Description, UnitPrice
-        FROM PricebookEntry
-        WHERE Pricebook2.IsStandard = true
-          AND IsActive = true
-          AND Product2.IsActive = true
-          AND Product2.Family = 'Tillval'
-        ORDER BY UnitPrice
-      `);
-      const addons = (r.records || []).map(pbe => ({
+      const { records } = await queryCatalogFamily('Tillval');
+      const addons = records.map(pbe => ({
         id: pbe.Product2.Id,
         pricebookEntryId: pbe.Id,
         name: pbe.Product2.Name,
@@ -141,6 +158,8 @@ module.exports = async function handler(req, res) {
         family: pbe.Product2.Family,
         description: pbe.Product2.Description,
         pricePerDay: pbe.UnitPrice,
+        longRentalDailyRate: pbe.Product2.Hyrto_LongRentalDailyRate__c ?? null,
+        fullPriceDays: pbe.Product2.Hyrto_FullPriceDays__c ?? null,
       }));
       sendJSON(res, 200, { addons, totalSize: addons.length });
       return;

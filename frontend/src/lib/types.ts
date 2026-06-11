@@ -13,6 +13,10 @@ export interface Product {
   description: string;
   pricePerDay: number;
   imageUrl?: string;
+  /** Långhyra-rabatt: dagspris efter fullPriceDays dagar. Null = ingen rabatt konfigurerad. */
+  longRentalDailyRate?: number | null;
+  /** Antal dagar med fullt pricePerDay innan rabatten slår in. Null = default 4. */
+  fullPriceDays?: number | null;
 }
 
 export interface Asset {

@@ -1,7 +1,7 @@
 'use client';
 
 import { SelectedProduct, Addon, Hub, Product } from '@/lib/types';
-import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS, FULL_PRICE_DAYS, LONG_RENTAL_DAILY_RATE, rentalCostForProduct } from '@/lib/pricing';
+import { isExpressOrder, EXPRESS_FEE, EXPRESS_CUTOFF_DAYS, rentalCostForProduct, longRentalParamsFor } from '@/lib/pricing';
 import { SERVICE_LEVELS } from '@/lib/api';
 
 interface Props {
@@ -20,8 +20,8 @@ interface Props {
     expressFee: number;
     total: number;
     numberOfDays: number;
-    fullPriceDays?: number;
-    longRentalDays?: number;
+    maxFullPriceDays?: number;
+    longRentalActive?: boolean;
   };
   isExpress: boolean;
   products: Product[];
@@ -93,7 +93,14 @@ export default function StepReview({
             {selectedProducts.map((sp) => {
               const product = products.find(p => p.id === sp.productId);
               if (!product) return null;
-              const r = rentalCostForProduct(product.pricePerDay, price.numberOfDays, sp.quantity);
+              const { fullPriceDays, longRentalDailyRate } = longRentalParamsFor(product);
+              const r = rentalCostForProduct(
+                product.pricePerDay,
+                price.numberOfDays,
+                sp.quantity,
+                fullPriceDays,
+                longRentalDailyRate,
+              );
               return (
                 <div key={sp.productId} className="mb-2">
                   <div className="flex justify-between text-sm">
@@ -106,15 +113,15 @@ export default function StepReview({
                   </div>
                   {r.longDays > 0 && (
                     <div className="text-xs text-gray-400 ml-3 mt-0.5">
-                      • Dag 1–4: {r.fullDays} dgr × {product.pricePerDay} kr = {r.fullPriceTotal.toLocaleString('sv-SE')} kr<br/>
-                      • Dag 5+: {r.longDays} dgr × {LONG_RENTAL_DAILY_RATE} kr (långhyra-rabatt) = {r.longRentalTotal.toLocaleString('sv-SE')} kr
+                      • Dag 1–{fullPriceDays}: {r.fullDays} dgr × {product.pricePerDay} kr = {r.fullPriceTotal.toLocaleString('sv-SE')} kr<br/>
+                      • Dag {fullPriceDays + 1}+: {r.longDays} dgr × {longRentalDailyRate} kr (långhyra-rabatt) = {r.longRentalTotal.toLocaleString('sv-SE')} kr
                     </div>
                   )}
                 </div>
               );
             })}
-            {price.numberOfDays > FULL_PRICE_DAYS && (
-              <p className="text-xs text-[#2D9C4A] mt-1 mb-1 font-medium">✨ Långhyra-rabatt: dag 5+ kostar bara {LONG_RENTAL_DAILY_RATE} kr/dag/toa</p>
+            {price.longRentalActive && (
+              <p className="text-xs text-[#2D9C4A] mt-1 mb-1 font-medium">✨ Långhyra-rabatt aktiv — priset per dag minskar efter dag {price.maxFullPriceDays}</p>
             )}
             <p className="text-right text-sm font-bold text-gray-900 mt-1">
               {price.toiletRental.toLocaleString('sv-SE')} kr
@@ -130,6 +137,7 @@ export default function StepReview({
                 {addons.map((addon, i) => {
                   const parentProduct = products.find(p => p.id === addon.parentProductId);
                   const parentName = parentProduct?.name || addon.parentProductId;
+                  // Addons får samma rabatt-modell som toaletter — default-fallback om produkten saknas i parent-list
                   const r = rentalCostForProduct(addon.pricePerDay, price.numberOfDays, addon.quantity);
                   return (
                     <div key={`${addon.parentProductId}-${addon.productId}-${i}`} className="flex justify-between text-sm mb-1">
