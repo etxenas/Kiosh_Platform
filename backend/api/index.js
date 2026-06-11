@@ -486,6 +486,8 @@ module.exports = async function handler(req, res) {
         Hyrto_SessionId__c: lead.Hyrto_SessionId__c,
         Hyrto_CustomerPostalCode__c: lead.Hyrto_PostalCode__c,
       };
+      if (typeof lead.Hyrto_DistanceKm__c === 'number') orderPayload.Hyrto_DistanceKm__c = lead.Hyrto_DistanceKm__c;
+      if (typeof lead.Hyrto_DeliveryFee__c === 'number') orderPayload.Hyrto_DeliveryFee__c = lead.Hyrto_DeliveryFee__c;
       if (contractId) orderPayload.ContractId = contractId;
       let orderId = null;
       try {
@@ -572,7 +574,7 @@ module.exports = async function handler(req, res) {
                     continue;
                   }
                   try {
-                    const bk = await sf.create('Hyrto_Booking__c', {
+                    const bookingPayload = {
                       Hub__c: lead.Hyrto_Hub__c,
                       Asset__c: assetId,
                       Account__c: accountId,
@@ -586,7 +588,10 @@ module.exports = async function handler(req, res) {
                       CustomerPostalCode__c: lead.Hyrto_PostalCode__c,
                       ServiceLevel__c: lead.Hyrto_ServiceLevel__c,
                       TotalPrice__c: totalPrice,
-                    });
+                    };
+                    if (typeof lead.Hyrto_DistanceKm__c === 'number') bookingPayload.DistanceKm__c = lead.Hyrto_DistanceKm__c;
+                    if (typeof lead.Hyrto_DeliveryFee__c === 'number') bookingPayload.DeliveryFee__c = lead.Hyrto_DeliveryFee__c;
+                    const bk = await sf.create('Hyrto_Booking__c', bookingPayload);
                     if (bk.success) {
                       bookingResults.push({ productId: line.productId, assetId, bookingId: bk.id });
                       if (!firstBookingId) firstBookingId = bk.id;
@@ -625,7 +630,54 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      return { accountId, contactId, oppId, contractId, orderId, itemResults, bookingResults, firstBookingId };
+      // ── A) Aktivera Contract ──
+      let contractActivated = false;
+      if (contractId) {
+        try {
+          await sf.update('Contract', contractId, { Status: 'Activated' });
+          contractActivated = true;
+        } catch (e) {
+          console.warn('Contract activation failed (kvarstår Draft):', e.message);
+        }
+      }
+
+      // ── B) Skicka bekräftelse-email via SF emailSimple ──
+      let emailSent = false;
+      if (lead.Email) {
+        const startStr = lead.Hyrto_StartDate__c
+          ? new Date(lead.Hyrto_StartDate__c).toLocaleDateString('sv-SE')
+          : '?';
+        const endStr = lead.Hyrto_EndDate__c
+          ? new Date(lead.Hyrto_EndDate__c).toLocaleDateString('sv-SE')
+          : '?';
+        const customerName = `${lead.FirstName || ''} ${lead.LastName || ''}`.trim() || 'kund';
+        const productsArr = lead.Hyrto_Products__c ? JSON.parse(lead.Hyrto_Products__c) : [];
+        const productsList = productsArr.map(p => `• ${p.quantity}× ${p.productCode || p.productId}`).join('\n');
+        const subject = `Tack för din bokning hos Hyrto — ${startStr}`;
+        const body = `Hej ${customerName}!\n\nTack för din bokning! Vi har tagit emot dina uppgifter.\n\nBokningsdetaljer:\n\u2022 Period: ${startStr} — ${endStr}\n\u2022 Leveransadress: ${lead.Hyrto_DeliveryAddress__c || '—'}\n${productsList ? '\nValda toaletter:\n' + productsList + '\n' : ''}\nTotalpris: ${totalPrice} kr\n\nVi hör av oss inom kort med leveransbekräftelse.\n\nMäd vänliga hälsningar,\nHyrto Team`;
+        try {
+          const tok = await sf._getToken();
+          const emailRes = await fetch(`${process.env.SF_INSTANCE_URL}/services/data/v62.0/actions/standard/emailSimple`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+            body: JSON.stringify({
+              inputs: [{
+                emailAddresses: lead.Email,
+                emailSubject: subject,
+                emailBody: body,
+                senderType: 'CurrentUser',
+              }],
+            }),
+          });
+          const emailResult = await emailRes.json();
+          emailSent = emailRes.ok && Array.isArray(emailResult) && emailResult[0]?.isSuccess;
+          if (!emailSent) console.warn('Email send returned:', JSON.stringify(emailResult).slice(0, 500));
+        } catch (e) {
+          console.warn('Email send threw:', e.message);
+        }
+      }
+
+      return { accountId, contactId, oppId, contractId, contractActivated, orderId, itemResults, bookingResults, firstBookingId, emailSent };
     }
 
     // ── FUNNEL TRACKING ── Upsert Lead by sessionId
@@ -706,6 +758,10 @@ module.exports = async function handler(req, res) {
       if (Array.isArray(data.addons) && data.addons.length > 0)
         leadFields.Hyrto_Addons__c = JSON.stringify(data.addons).slice(0, 32000);
       if (typeof data.totalPrice === 'number') leadFields.Hyrto_TotalPrice__c = data.totalPrice;
+      // Distance + deliveryFee skickas av frontend för att kunna propageras till Booking/Order.
+      // Fältena kanske inte finns på Lead än — wrappas i en backup-try nedan vid skrivning.
+      if (typeof data.distanceKm === 'number') leadFields.Hyrto_DistanceKm__c = data.distanceKm;
+      if (typeof data.deliveryFee === 'number') leadFields.Hyrto_DeliveryFee__c = data.deliveryFee;
       // Company is required on Lead
       leadFields.Company = data.billingCompanyName || (isB2B ? 'Okänt företag' : `${nm.first} ${nm.last}`.trim() || 'Privatperson');
 
@@ -761,7 +817,14 @@ module.exports = async function handler(req, res) {
       let conversion = null;
       if (step === 'bookingCreated') {
         // Refetch lead with all fields needed for conversion
-        const leadQ = await sf.query(`SELECT Id, FirstName, LastName, Email, Phone, Company, Hyrto_SessionId__c, Hyrto_PostalCode__c, Hyrto_Hub__c, Hyrto_StartDate__c, Hyrto_EndDate__c, Hyrto_ServiceLevel__c, Hyrto_Products__c, Hyrto_Addons__c, Hyrto_DeliveryAddress__c, Hyrto_BillingReference__c, Hyrto_BillingOrgNumber__c, Hyrto_BillingCompanyName__c, Hyrto_BillingStreet__c, Hyrto_BillingPostalCode__c, Hyrto_BillingCity__c, Hyrto_TotalPrice__c, Hyrto_IsB2B__c FROM Lead WHERE Id = '${leadId}'`);
+        // Försök med distance/deliveryFee-fält; om de inte finns än, fall tillbaka utan dem.
+        const baseFields = `Id, FirstName, LastName, Email, Phone, Company, Hyrto_SessionId__c, Hyrto_PostalCode__c, Hyrto_Hub__c, Hyrto_StartDate__c, Hyrto_EndDate__c, Hyrto_ServiceLevel__c, Hyrto_Products__c, Hyrto_Addons__c, Hyrto_DeliveryAddress__c, Hyrto_BillingReference__c, Hyrto_BillingOrgNumber__c, Hyrto_BillingCompanyName__c, Hyrto_BillingStreet__c, Hyrto_BillingPostalCode__c, Hyrto_BillingCity__c, Hyrto_TotalPrice__c, Hyrto_IsB2B__c`;
+        let leadQ;
+        try {
+          leadQ = await sf.query(`SELECT ${baseFields}, Hyrto_DistanceKm__c, Hyrto_DeliveryFee__c FROM Lead WHERE Id = '${leadId}'`);
+        } catch {
+          leadQ = await sf.query(`SELECT ${baseFields} FROM Lead WHERE Id = '${leadId}'`);
+        }
         const lead = leadQ.records[0];
         try {
           conversion = await convertLeadToCustomer(leadId, lead, data.totalPrice);

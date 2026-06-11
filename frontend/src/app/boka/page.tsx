@@ -206,6 +206,8 @@ export default function BokaPage() {
           customerName: booking.customer ? `${booking.customer.firstName} ${booking.customer.lastName}` : booking.customerName,
           customerEmail: booking.customer?.email || booking.customerEmail,
           customerPhone: booking.customer?.phone,
+          distanceKm: booking.selectedHub?.distanceKm,
+          deliveryFee: booking.selectedHub?.deliveryFee,
         });
         updateBooking({ bookingResponse: data, step: 'confirmation' });
       } else {

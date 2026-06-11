@@ -42,6 +42,8 @@ export interface FunnelData {
   deliveryAddress?: string;
   totalPrice?: number;
   bookingId?: string;
+  distanceKm?: number;
+  deliveryFee?: number;
 }
 
 /** Fire-and-forget. Never blocks UX, never throws. */
